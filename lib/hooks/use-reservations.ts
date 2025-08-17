@@ -65,7 +65,18 @@ export function useReservations(propertyId?: string, filters?: {
         .order('check_in_date', { ascending: true })
 
       if (error) throw error
-      return data
+
+      // Transform data to include guest_name, room_number, and room_type for easier display
+      const transformedData = data?.map(reservation => ({
+        ...reservation,
+        guest_name: reservation.guests 
+          ? `${reservation.guests.first_name} ${reservation.guests.last_name}`.trim()
+          : 'N/A',
+        room_number: reservation.rooms?.room_number || 'N/A',
+        room_type: reservation.rooms?.room_type || 'N/A'
+      }))
+      
+      return transformedData
     },
   })
 }
@@ -95,7 +106,18 @@ export function useReservation(id: string | null) {
         .single()
 
       if (error) throw error
-      return data
+
+      // Transform data to include guest_name, room_number, and room_type for easier display
+      const transformedReservation = {
+        ...data,
+        guest_name: data.guests 
+          ? `${data.guests.first_name} ${data.guests.last_name}`.trim()
+          : 'N/A',
+        room_number: data.rooms?.room_number || 'N/A',
+        room_type: data.rooms?.room_type || 'N/A'
+      }
+      
+      return transformedReservation
     },
     enabled: !!id,
   })

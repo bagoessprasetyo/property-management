@@ -19,6 +19,7 @@ import {
   Clock,
   MapPin
 } from 'lucide-react'
+import { ReservationForm } from './reservation-form'
 
 interface ReservationGridProps {
   startDate?: Date
@@ -35,6 +36,7 @@ export function ReservationGrid({
   const updateReservation = useUpdateReservation()
   
   const [currentWeekStart, setCurrentWeekStart] = useState(startDate)
+  const [showCreateForm, setShowCreateForm] = useState(false)
 
   // Generate date columns for the grid (7 days)
   const dateColumns = useMemo(() => {
@@ -152,7 +154,7 @@ export function ReservationGrid({
             </Button>
           </div>
         </div>
-        <Button>
+        <Button onClick={() => setShowCreateForm(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Reservasi Baru
         </Button>
@@ -268,6 +270,13 @@ export function ReservationGrid({
           ))}
         </div>
       </DragDropContext>
+
+      {/* Reservation Form Dialog */}
+      <ReservationForm
+        open={showCreateForm}
+        onOpenChange={setShowCreateForm}
+        onSuccess={() => setShowCreateForm(false)}
+      />
     </div>
   )
 }

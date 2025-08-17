@@ -154,7 +154,7 @@ async function getOccupancyReport(propertyId?: string, today?: string): Promise<
   let roomQuery = supabase.from('rooms').select('status, is_active')
   let reservationQuery = supabase
     .from('reservations')
-    .select('check_in_date, check_out_date, status, adults, children')
+    .select('check_in_date, check_out_date, status, adults, children, rooms(property_id)')
   
   if (propertyId) {
     roomQuery = roomQuery.eq('property_id', propertyId)

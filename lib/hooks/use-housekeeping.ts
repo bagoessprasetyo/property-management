@@ -37,10 +37,6 @@ export function useHousekeepingTasks(propertyId?: string, filters?: {
           *,
           rooms (
             room_number
-          ),
-          staff (
-            first_name,
-            last_name
           )
         `)
 
@@ -72,9 +68,7 @@ export function useHousekeepingTasks(propertyId?: string, filters?: {
       const transformedData = data.map(task => ({
         ...task,
         room_number: task.rooms?.room_number || 'N/A',
-        assigned_to_name: task.staff 
-          ? `${task.staff.first_name} ${task.staff.last_name}`.trim()
-          : 'Belum ditugaskan'
+        assigned_to_name: task.assigned_to || 'Belum ditugaskan'
       }))
 
       return transformedData
@@ -95,10 +89,6 @@ export function useHousekeepingTask(id: string | null) {
           *,
           rooms (
             room_number
-          ),
-          staff (
-            first_name,
-            last_name
           )
         `)
         .eq('id', id)
@@ -110,9 +100,7 @@ export function useHousekeepingTask(id: string | null) {
       const transformedTask = {
         ...data,
         room_number: data.rooms?.room_number || 'N/A',
-        assigned_to_name: data.staff 
-          ? `${data.staff.first_name} ${data.staff.last_name}`.trim()
-          : 'Belum ditugaskan'
+        assigned_to_name: data.assigned_to || 'Belum ditugaskan'
       }
       
       return transformedTask
@@ -132,10 +120,6 @@ export function useHousekeepingSchedule(propertyId: string, date: string) {
           *,
           rooms (
             room_number
-          ),
-          staff (
-            first_name,
-            last_name
           )
         `)
         .eq('property_id', propertyId)
@@ -148,9 +132,7 @@ export function useHousekeepingSchedule(propertyId: string, date: string) {
       const transformedData = data.map(task => ({
         ...task,
         room_number: task.rooms?.room_number || 'N/A',
-        assigned_to_name: task.staff 
-          ? `${task.staff.first_name} ${task.staff.last_name}`.trim()
-          : 'Belum ditugaskan'
+        assigned_to_name: task.assigned_to || 'Belum ditugaskan'
       }))
 
       return transformedData
@@ -171,10 +153,6 @@ export function useCreateHousekeepingTask() {
           *,
           rooms (
             room_number
-          ),
-          staff (
-            first_name,
-            last_name
           )
         `)
         .single()
@@ -185,9 +163,7 @@ export function useCreateHousekeepingTask() {
       const transformedTask = {
         ...data,
         room_number: data.rooms?.room_number || 'N/A',
-        assigned_to_name: data.staff 
-          ? `${data.staff.first_name} ${data.staff.last_name}`.trim()
-          : 'Belum ditugaskan'
+        assigned_to_name: data.assigned_to || 'Belum ditugaskan'
       }
       
       return transformedTask
@@ -212,10 +188,6 @@ export function useUpdateHousekeepingTask() {
           *,
           rooms (
             room_number
-          ),
-          staff (
-            first_name,
-            last_name
           )
         `)
         .single()
@@ -226,9 +198,7 @@ export function useUpdateHousekeepingTask() {
       const transformedTask = {
         ...data,
         room_number: data.rooms?.room_number || 'N/A',
-        assigned_to_name: data.staff 
-          ? `${data.staff.first_name} ${data.staff.last_name}`.trim()
-          : 'Belum ditugaskan'
+        assigned_to_name: data.assigned_to || 'Belum ditugaskan'
       }
       
       return transformedTask

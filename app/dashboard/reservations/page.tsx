@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ReservationGrid } from '@/components/reservations/reservation-grid'
+import { ReservationForm } from '@/components/reservations/reservation-form'
+import { ReservationDetail } from '@/components/reservations/reservation-detail'
 import {
   Select,
   SelectContent,
@@ -51,6 +53,9 @@ export default function ReservationsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState('all')
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [selectedReservationId, setSelectedReservationId] = useState<string | null>(null)
+  const [showReservationDetail, setShowReservationDetail] = useState(false)
 
   // Filter reservations based on search and filters
   const filteredReservations = reservations?.filter(reservation => {
@@ -137,6 +142,16 @@ export default function ReservationsPage() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 
+  const handleViewReservation = (reservationId: string) => {
+    setSelectedReservationId(reservationId)
+    setShowReservationDetail(true)
+  }
+
+  const handleEditReservation = (reservationId: string) => {
+    setSelectedReservationId(reservationId)
+    setShowCreateForm(true)
+  }
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -184,7 +199,10 @@ export default function ReservationsPage() {
                 Tabel
               </Button>
             </div>
-            <Button className="bg-warm-brown-600 hover:bg-warm-brown-700">
+            <Button 
+              className="bg-warm-brown-600 hover:bg-warm-brown-700"
+              onClick={() => setShowCreateForm(true)}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Buat Reservasi
             </Button>
@@ -431,10 +449,18 @@ export default function ReservationsPage() {
                         <TableCell>{getStatusBadge(reservation.status)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleViewReservation(reservation.id)}
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditReservation(reservation.id)}
+                            >
                               <Edit className="w-4 h-4" />
                             </Button>
                           </div>
@@ -448,6 +474,30 @@ export default function ReservationsPage() {
           </CardContent>
         </Card>
         )}
+
+        {/* Reservation Form Dialog */}
+        <ReservationForm
+          reservation={selectedReservationId ? reservations?.find(r => r.id === selectedReservationId) : undefined}
+          open={showCreateForm}
+          onOpenChange={(open) => {
+            setShowCreateForm(open)
+            if (!open) setSelectedReservationId(null)
+          }}
+          onSuccess={() => {
+            setShowCreateForm(false)
+            setSelectedReservationId(null)
+          }}
+        />
+
+        {/* Reservation Detail Dialog */}
+        <ReservationDetail
+          reservationId={selectedReservationId}
+          open={showReservationDetail}
+          onOpenChange={(open) => {
+            setShowReservationDetail(open)
+            if (!open) setSelectedReservationId(null)
+          }}
+        />
       </div>
     </div>
   )

@@ -35,6 +35,8 @@ import {
   DollarSign,
   Loader2
 } from 'lucide-react'
+import { RoomForm } from '@/components/rooms/room-form'
+import { RoomDetail } from '@/components/rooms/room-detail'
 
 export default function RoomsPage() {
   const { currentProperty } = useProperty()
@@ -42,6 +44,9 @@ export default function RoomsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
+  const [showRoomDetail, setShowRoomDetail] = useState(false)
 
   // Filter rooms based on search and filters
   const filteredRooms = rooms?.filter(room => {
@@ -55,6 +60,16 @@ export default function RoomsPage() {
 
   // Get unique room types for filter
   const roomTypes = Array.from(new Set(rooms?.map(room => room.room_type) || []))
+
+  const handleViewRoom = (roomId: string) => {
+    setSelectedRoomId(roomId)
+    setShowRoomDetail(true)
+  }
+
+  const handleEditRoom = (roomId: string) => {
+    setSelectedRoomId(roomId)
+    setShowCreateForm(true)
+  }
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -99,7 +114,10 @@ export default function RoomsPage() {
               Kelola kamar dan status housekeeping
             </p>
           </div>
-          <Button className="bg-warm-brown-600 hover:bg-warm-brown-700">
+          <Button 
+            className="bg-warm-brown-600 hover:bg-warm-brown-700"
+            onClick={() => setShowCreateForm(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Tambah Kamar
           </Button>
@@ -265,14 +283,19 @@ export default function RoomsPage() {
                         <TableCell>Lantai {room.floor || '-'}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleViewRoom(room.id)}
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditRoom(room.id)}
+                            >
                               <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Settings className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -284,6 +307,30 @@ export default function RoomsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Room Form Dialog */}
+        <RoomForm
+          room={selectedRoomId ? rooms?.find(r => r.id === selectedRoomId) : undefined}
+          open={showCreateForm}
+          onOpenChange={(open) => {
+            setShowCreateForm(open)
+            if (!open) setSelectedRoomId(null)
+          }}
+          onSuccess={() => {
+            setShowCreateForm(false)
+            setSelectedRoomId(null)
+          }}
+        />
+
+        {/* Room Detail Dialog */}
+        <RoomDetail
+          roomId={selectedRoomId}
+          open={showRoomDetail}
+          onOpenChange={(open) => {
+            setShowRoomDetail(open)
+            if (!open) setSelectedRoomId(null)
+          }}
+        />
       </div>
     </div>
   )

@@ -213,7 +213,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          property_id: string
+          property_id: string | undefined
           room_id: string
           guest_id: string
           confirmation_number?: string
@@ -577,9 +577,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      booking_status: 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show'
+      booking_status: 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show'
       room_status: 'clean' | 'dirty' | 'inspected' | 'out_of_order'
-      payment_status: 'pending' | 'completed' | 'failed' | 'refunded'
+      payment_status: 'pending' | 'completed' | 'failed' | 'refunded' | 'cancelled'
       payment_method: 'credit_card' | 'debit_card' | 'cash' | 'bank_transfer' | 'digital_wallet'
       expense_category: 'maintenance' | 'utilities' | 'supplies' | 'marketing' | 'staff' | 'insurance' | 'other'
     }

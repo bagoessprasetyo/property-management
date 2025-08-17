@@ -28,9 +28,15 @@ import {
   UserCheck,
   Calendar
 } from 'lucide-react'
+import { GuestForm } from '@/components/guests/guest-form'
+import { GuestDetail } from '@/components/guests/guest-detail'
 
 export default function GuestsPage() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null)
+  const [showGuestDetail, setShowGuestDetail] = useState(false)
+  
   const { data: guests, isLoading } = useGuests(searchQuery)
 
   const getGuestTypeLabel = (guest: any) => {
@@ -41,6 +47,16 @@ export default function GuestsPage() {
       return 'Asing'
     }
     return 'Tidak diketahui'
+  }
+
+  const handleViewGuest = (guestId: string) => {
+    setSelectedGuestId(guestId)
+    setShowGuestDetail(true)
+  }
+
+  const handleEditGuest = (guestId: string) => {
+    setSelectedGuestId(guestId)
+    setShowCreateForm(true)
   }
 
   if (isLoading) {
@@ -69,7 +85,10 @@ export default function GuestsPage() {
               Kelola data tamu dan riwayat menginap
             </p>
           </div>
-          <Button className="bg-warm-brown-600 hover:bg-warm-brown-700">
+          <Button 
+            className="bg-warm-brown-600 hover:bg-warm-brown-700"
+            onClick={() => setShowCreateForm(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Tambah Tamu
           </Button>
@@ -276,10 +295,18 @@ export default function GuestsPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleViewGuest(guest.id)}
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditGuest(guest.id)}
+                            >
                               <Edit className="w-4 h-4" />
                             </Button>
                           </div>
@@ -292,6 +319,30 @@ export default function GuestsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Guest Form Dialog */}
+        <GuestForm
+          guest={selectedGuestId ? guests?.find(g => g.id === selectedGuestId) : undefined}
+          open={showCreateForm}
+          onOpenChange={(open) => {
+            setShowCreateForm(open)
+            if (!open) setSelectedGuestId(null)
+          }}
+          onSuccess={() => {
+            setShowCreateForm(false)
+            setSelectedGuestId(null)
+          }}
+        />
+
+        {/* Guest Detail Dialog */}
+        <GuestDetail
+          guestId={selectedGuestId}
+          open={showGuestDetail}
+          onOpenChange={(open) => {
+            setShowGuestDetail(open)
+            if (!open) setSelectedGuestId(null)
+          }}
+        />
       </div>
     </div>
   )

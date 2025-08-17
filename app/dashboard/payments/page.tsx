@@ -43,6 +43,8 @@ import {
   User,
   Building
 } from 'lucide-react'
+import { PaymentForm } from '@/components/payments/payment-form'
+import { PaymentDetail } from '@/components/payments/payment-detail'
 
 export default function PaymentsPage() {
   const { currentProperty } = useProperty()
@@ -51,6 +53,9 @@ export default function PaymentsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [methodFilter, setMethodFilter] = useState('all')
   const [periodFilter, setPeriodFilter] = useState('all')
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null)
+  const [showPaymentDetail, setShowPaymentDetail] = useState(false)
 
   // Filter payments based on search and filters
   const filteredPayments = payments?.filter(payment => {
@@ -153,6 +158,16 @@ export default function PaymentsPage() {
   }
 
   // Calculate totals
+  const handleViewPayment = (paymentId: string) => {
+    setSelectedPaymentId(paymentId)
+    setShowPaymentDetail(true)
+  }
+
+  const handleEditPayment = (paymentId: string) => {
+    setSelectedPaymentId(paymentId)
+    setShowCreateForm(true)
+  }
+
   const totalRevenue = filteredPayments
     .filter(p => p.status === 'completed')
     .reduce((sum, p) => sum + (p.amount || 0), 0)
@@ -192,7 +207,10 @@ export default function PaymentsPage() {
               <Download className="w-4 h-4 mr-2" />
               Ekspor
             </Button>
-            <Button className="bg-warm-brown-600 hover:bg-warm-brown-700">
+            <Button 
+              className="bg-warm-brown-600 hover:bg-warm-brown-700"
+              onClick={() => setShowCreateForm(true)}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Tambah Pembayaran
             </Button>
@@ -449,14 +467,22 @@ export default function PaymentsPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleViewPayment(payment.id)}
+                            >
                               <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditPayment(payment.id)}
+                            >
+                              <Edit className="w-4 h-4" />
                             </Button>
                             <Button variant="ghost" size="sm">
                               <Download className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Edit className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -468,6 +494,30 @@ export default function PaymentsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Payment Form Dialog */}
+        <PaymentForm
+          payment={selectedPaymentId ? payments?.find(p => p.id === selectedPaymentId) : undefined}
+          open={showCreateForm}
+          onOpenChange={(open) => {
+            setShowCreateForm(open)
+            if (!open) setSelectedPaymentId(null)
+          }}
+          onSuccess={() => {
+            setShowCreateForm(false)
+            setSelectedPaymentId(null)
+          }}
+        />
+
+        {/* Payment Detail Dialog */}
+        <PaymentDetail
+          paymentId={selectedPaymentId}
+          open={showPaymentDetail}
+          onOpenChange={(open) => {
+            setShowPaymentDetail(open)
+            if (!open) setSelectedPaymentId(null)
+          }}
+        />
       </div>
     </div>
   )
