@@ -41,12 +41,13 @@ export function useReservations(propertyId?: string, filters?: {
           rooms (
             id,
             room_number,
-            room_type
+            room_type,
+            property_id
           )
         `)
 
       if (propertyId) {
-        query = query.eq('property_id', propertyId)
+        query = query.eq('rooms.property_id', propertyId)
       }
 
       if (filters?.status) {
@@ -145,10 +146,11 @@ export function useReservationCalendar(propertyId: string, startDate: string, en
           rooms (
             id,
             room_number,
-            room_type
+            room_type,
+            property_id
           )
         `)
-        .eq('property_id', propertyId)
+        .eq('rooms.property_id', propertyId)
         .or(`and(check_in_date.gte.${startDate},check_in_date.lte.${endDate}),and(check_out_date.gte.${startDate},check_out_date.lte.${endDate}),and(check_in_date.lte.${startDate},check_out_date.gte.${endDate})`)
         .order('check_in_date', { ascending: true })
 
@@ -165,10 +167,10 @@ export function useReservationStats(propertyId?: string) {
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0]
       
-      let query = supabase.from('reservations').select('status, check_in_date, check_out_date, total_amount')
+      let query = supabase.from('reservations').select('status, check_in_date, check_out_date, total_amount, rooms(property_id)')
       
       if (propertyId) {
-        query = query.eq('property_id', propertyId)
+        query = query.eq('rooms.property_id', propertyId)
       }
 
       const { data, error } = await query

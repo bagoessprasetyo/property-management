@@ -187,7 +187,7 @@ export function useRecentActivities(propertyId?: string, limit: number = 10) {
       const today = new Date().toISOString().split('T')[0]
       const activities: RecentActivity[] = []
 
-      // Get recent reservations
+      // Get recent reservations  
       let reservationsQuery = supabase
         .from('reservations')
         .select(`
@@ -197,6 +197,8 @@ export function useRecentActivities(propertyId?: string, limit: number = 10) {
           check_out_date,
           created_at,
           updated_at,
+          room_id,
+          guest_id,
           guests(first_name, last_name),
           rooms(room_number, property_id)
         `)
@@ -240,10 +242,12 @@ export function useRecentActivities(propertyId?: string, limit: number = 10) {
 
       // Process reservations into activities
       reservations.forEach(reservation => {
-        const guestName = reservation.guests 
+        const guestName = reservation.guests && reservation.guests.length > 0
           ? `${reservation.guests[0].first_name} ${reservation.guests[0].last_name}`.trim()
           : 'Tamu'
-        const roomNumber = reservation.rooms?.[0]?.room_number || 'N/A'
+        const roomNumber = reservation.rooms && reservation.rooms.length > 0
+          ? reservation.rooms[0].room_number || 'N/A'
+          : 'N/A'
 
         // Check-in activities
         if (reservation.status === 'checked_in' && reservation.check_in_date === today) {
@@ -310,7 +314,9 @@ export function useRecentActivities(propertyId?: string, limit: number = 10) {
             type: 'housekeeping',
             title: 'Housekeeping Selesai',
             description: `${task.task_type} selesai oleh ${task.assigned_to || 'Staff'}`,
-            roomNumber: task.rooms?.[0]?.room_number || 'N/A',
+            roomNumber: task.rooms && task.rooms.length > 0
+          ? task.rooms[0].room_number || 'N/A'
+          : 'N/A',
             timestamp: task.completed_at,
             status: 'completed'
           })
@@ -340,6 +346,8 @@ export function useUpcomingActivities(propertyId?: string) {
         .select(`
           id,
           check_in_date,
+          guest_id,
+          room_id,
           guests(first_name, last_name),
           rooms(room_number, property_id)
         `)
@@ -356,6 +364,8 @@ export function useUpcomingActivities(propertyId?: string) {
         .select(`
           id,
           check_out_date,
+          guest_id,
+          room_id,
           guests(first_name, last_name),
           rooms(room_number, property_id)
         `)

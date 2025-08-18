@@ -104,6 +104,7 @@ export function ReservationForm({
   const createReservation = useCreateReservation()
   const updateReservation = useUpdateReservation()
   const { data: rooms } = useRooms(currentProperty?.id)
+  const { data: allRooms } = useRooms() // Fallback for when property rooms are empty
   const { data: guests } = useGuests()
 
   const form = useForm<ReservationFormData>({
@@ -135,11 +136,14 @@ export function ReservationForm({
     }
   }, [reservation])
 
+  // Use appropriate rooms data with fallback
+  const roomsData = (rooms?.length || 0) > 0 ? rooms : allRooms
+
   // Calculate nights and estimate total
   const checkInDate = form.watch('check_in_date')
   const checkOutDate = form.watch('check_out_date')
   const selectedRoomId = form.watch('room_id')
-  const selectedRoom = rooms?.find(r => r.id === selectedRoomId)
+  const selectedRoom = roomsData?.find(r => r.id === selectedRoomId)
   
   const nights = checkInDate && checkOutDate ? 
     Math.max(1, Math.ceil((new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 60 * 60 * 24))) : 0
@@ -438,31 +442,46 @@ export function ReservationForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {rooms?.map(room => (
-                            <SelectItem key={room.id} value={room.id}>
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <Bed className="w-4 h-4 text-blue-600" />
-                                </div>
-                                <div>
-                                  <div className="font-medium">
-                                    {room.room_number} - {room.room_type}
+                          {roomsData && roomsData.length > 0 ? (
+                            roomsData.map(room => (
+                              <SelectItem key={room.id} value={room.id}>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <Bed className="w-4 h-4 text-blue-600" />
                                   </div>
-                                  <div className="text-sm text-gray-500 flex items-center gap-4">
-                                    <span className="flex items-center gap-1">
-                                      <Users className="w-3 h-3" />
-                                      {room.capacity} tamu
-                                    </span>
-                                    <span className="text-green-600 font-medium">
-                                      {formatIDR(room.base_rate)}/malam
-                                    </span>
+                                  <div>
+                                    <div className="font-medium">
+                                      {room.room_number} - {room.room_type}
+                                    </div>
+                                    <div className="text-sm text-gray-500 flex items-center gap-4">
+                                      <span className="flex items-center gap-1">
+                                        <Users className="w-3 h-3" />
+                                        {room.capacity} tamu
+                                      </span>
+                                      <span className="text-green-600 font-medium">
+                                        {formatIDR(room.base_rate)}/malam
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="" disabled>
+                              <div className="flex items-center gap-2 text-gray-500">
+                                <AlertCircle className="w-4 h-4" />
+                                Tidak ada kamar tersedia
                               </div>
                             </SelectItem>
-                          ))}
+                          )}
                         </SelectContent>
                       </Select>
+                      <FormDescription>
+                        {roomsData ? `${roomsData.length} kamar tersedia` : 'Memuat data kamar...'}
+                        {rooms && allRooms && rooms.length === 0 && allRooms.length > 0 && 
+                          ' (menampilkan semua kamar karena properti belum dipilih)'
+                        }
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

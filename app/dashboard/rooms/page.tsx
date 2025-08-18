@@ -40,7 +40,7 @@ import { RoomDetail } from '@/components/rooms/room-detail'
 
 export default function RoomsPage() {
   const { currentProperty } = useProperty()
-  const { data: rooms, isLoading } = useRooms(currentProperty?.id)
+  const { data: rooms, isLoading } = useRooms()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')

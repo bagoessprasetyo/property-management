@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { ReservationGrid } from '@/components/reservations/reservation-grid'
+import { CalendarView } from '@/components/calendar/calendar-view'
 import { ReservationForm } from '@/components/reservations/reservation-form'
 import { ReservationDetail } from '@/components/reservations/reservation-detail'
 import {
@@ -332,7 +332,10 @@ export default function ReservationsPage() {
 
         {/* Main Content Area */}
         {viewMode === 'grid' ? (
-          <ReservationGrid />
+          <CalendarView 
+            defaultView="week"
+            onReservationSelect={handleViewReservation}
+          />
         ) : (
           <Card>
             <CardHeader>
@@ -411,7 +414,7 @@ export default function ReservationsPage() {
                               })}
                             </div>
                             <div className="text-gray-500">
-                              {reservation.check_in_time || '14:00'} WIB
+                              14:00 WIB
                             </div>
                           </div>
                         </TableCell>
@@ -425,7 +428,7 @@ export default function ReservationsPage() {
                               })}
                             </div>
                             <div className="text-gray-500">
-                              {reservation.check_out_time || '12:00'} WIB
+                              12:00 WIB
                             </div>
                           </div>
                         </TableCell>

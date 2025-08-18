@@ -78,26 +78,47 @@ export class DataBackupManager {
         backup.rooms = this.sanitizeBackupData(rooms)
       }
 
-      // Backup guests
-      let guestsQuery = this.supabase.from('guests').select('*')
+      // Backup guests (guests are global entities, not property-specific)
+      // If backing up for a specific property, we'll get guests who have reservations in that property
+      let guestsQuery
       if (propertyId) {
-        guestsQuery = guestsQuery.eq('property_id', propertyId)
+        // Get guests who have reservations in this property
+        guestsQuery = this.supabase
+          .from('guests')
+          .select(`
+            *,
+            reservations!inner(rooms!inner(property_id))
+          `)
+          .eq('reservations.rooms.property_id', propertyId)
+      } else {
+        // Get all guests for full backup
+        guestsQuery = this.supabase.from('guests').select('*')
       }
       
       const { data: guests } = await guestsQuery
       if (guests) {
-        backup.guests = this.sanitizeBackupData(guests)
+        // Remove nested reservation data from guests for clean backup
+        const cleanGuests = guests.map(guest => {
+          const { reservations, ...cleanGuest } = guest
+          return cleanGuest
+        })
+        backup.guests = this.sanitizeBackupData(cleanGuests)
       }
 
       // Backup reservations
-      let reservationsQuery = this.supabase.from('reservations').select('*')
+      let reservationsQuery = this.supabase.from('reservations').select('*, rooms(property_id)')
       if (propertyId) {
-        reservationsQuery = reservationsQuery.eq('property_id', propertyId)
+        reservationsQuery = reservationsQuery.eq('rooms.property_id', propertyId)
       }
       
       const { data: reservations } = await reservationsQuery
       if (reservations) {
-        backup.reservations = this.sanitizeBackupData(reservations)
+        // Remove nested rooms data from reservations for clean backup
+        const cleanReservations = reservations.map(reservation => {
+          const { rooms, ...cleanReservation } = reservation
+          return cleanReservation
+        })
+        backup.reservations = this.sanitizeBackupData(cleanReservations)
       }
 
       // Backup payments

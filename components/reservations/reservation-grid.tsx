@@ -32,10 +32,15 @@ export function ReservationGrid({
 }: ReservationGridProps) {
   const { currentProperty } = useProperty()
   const { data: reservations } = useReservations(currentProperty?.id)
-  const { data: rooms } = useRooms(currentProperty?.id)
+  const { data: rooms, error: roomsError, isLoading: roomsLoading } = useRooms(currentProperty?.id)
+  // Load ALL rooms as fallback when property rooms are empty
+  const { data: allRooms } = useRooms()
   const updateReservation = useUpdateReservation()
   
-  const [currentWeekStart, setCurrentWeekStart] = useState(startDate)
+  // Start from a week ago to show more reservations
+  const defaultStartDate = new Date()
+  defaultStartDate.setDate(defaultStartDate.getDate() - 7)
+  const [currentWeekStart, setCurrentWeekStart] = useState(defaultStartDate)
   const [showCreateForm, setShowCreateForm] = useState(false)
 
   // Generate date columns for the grid (7 days)
@@ -51,12 +56,18 @@ export function ReservationGrid({
 
   // Filter and organize reservations by room and date
   const gridData = useMemo(() => {
-    if (!rooms || !reservations) return {}
+    // Use allRooms as fallback if property-specific rooms are empty
+    const roomsToUse = (rooms?.length || 0) > 0 ? rooms : allRooms
+    
+    if (!roomsToUse || !reservations) {
+      return {}
+    }
+
 
     const grid: Record<string, Record<string, any[]>> = {}
 
     // Initialize grid structure
-    rooms.forEach(room => {
+    roomsToUse.forEach(room => {
       grid[room.id] = {}
       dateColumns.forEach(date => {
         const dateKey = date.toISOString().split('T')[0]
@@ -66,24 +77,52 @@ export function ReservationGrid({
 
     // Place reservations in the grid
     reservations.forEach(reservation => {
-      const checkIn = new Date(reservation.check_in_date)
-      const checkOut = new Date(reservation.check_out_date)
+      if (!reservation.room_id) {
+        console.warn('Reservation missing room_id:', reservation.id)
+        return
+      }
+
+      if (!grid[reservation.room_id]) {
+        console.warn('Room not found in grid:', reservation.room_id)
+        return
+      }
+
+      const checkInStr = reservation.check_in_date
+      const checkOutStr = reservation.check_out_date
+      
+      if (!checkInStr || !checkOutStr) {
+        console.warn('Reservation missing dates:', reservation.id)
+        return
+      }
+
+      // Use date strings for comparison to avoid timezone issues
+      const checkInDate = checkInStr.split('T')[0] // Get YYYY-MM-DD part
+      const checkOutDate = checkOutStr.split('T')[0]
+      
       
       // Check if reservation overlaps with our date range
+      let placed = false
       dateColumns.forEach(date => {
         const dateKey = date.toISOString().split('T')[0]
-        const currentDate = new Date(dateKey)
         
-        if (currentDate >= checkIn && currentDate < checkOut && reservation.room_id) {
-          if (grid[reservation.room_id] && grid[reservation.room_id][dateKey]) {
-            grid[reservation.room_id][dateKey].push(reservation)
-          }
+        // Check if this date falls within the reservation period
+        // More inclusive logic: show reservation if it overlaps with any part of this date
+        const isWithinRange = dateKey >= checkInDate && dateKey < checkOutDate
+        const isCheckInDay = dateKey === checkInDate
+        const isCheckOutDay = dateKey === checkOutDate
+        const isSpanningDay = checkInDate < dateKey && dateKey < checkOutDate
+        
+        if (isWithinRange || isCheckInDay) {
+          grid[reservation.room_id][dateKey].push(reservation)
+          placed = true
         }
       })
+      
     })
 
+
     return grid
-  }, [rooms, reservations, dateColumns])
+  }, [rooms, allRooms, reservations, dateColumns])
 
   const handleDragEnd = async (result: any) => {
     const { destination, source, draggableId } = result
@@ -132,12 +171,16 @@ export function ReservationGrid({
     }
   }
 
-  if (!rooms) {
+  // Use rooms or allRooms for display
+  const roomsToDisplay = (rooms?.length || 0) > 0 ? rooms : allRooms
+  
+  if (!roomsToDisplay) {
     return <div>Loading...</div>
   }
 
   return (
     <div className="space-y-4">
+      
       {/* Header with navigation */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -154,10 +197,52 @@ export function ReservationGrid({
             </Button>
           </div>
         </div>
-        <Button onClick={() => setShowCreateForm(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Reservasi Baru
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setCurrentWeekStart(new Date())}
+          >
+            Hari Ini
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              const futureDate = new Date()
+              futureDate.setDate(futureDate.getDate() + 7)
+              setCurrentWeekStart(futureDate)
+            }}
+          >
+            Minggu Depan
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              const newStart = new Date()
+              newStart.setDate(newStart.getDate() - 30)
+              setCurrentWeekStart(newStart)
+            }}
+          >
+            30 Hari Lalu
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              // Set to show the reservations date range
+              const reservationDate = new Date('2025-08-18')
+              setCurrentWeekStart(reservationDate)
+            }}
+          >
+            Show Reservations
+          </Button>
+          <Button onClick={() => setShowCreateForm(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Reservasi Baru
+          </Button>
+        </div>
       </div>
 
       {/* Grid */}
@@ -175,7 +260,7 @@ export function ReservationGrid({
           </div>
 
           {/* Room rows */}
-          {rooms.map((room) => (
+          {roomsToDisplay.map((room) => (
             <div key={room.id} className="grid grid-cols-8 border-b last:border-b-0">
               {/* Room info */}
               <div className="p-3 border-r bg-gray-50">
@@ -235,7 +320,7 @@ export function ReservationGrid({
                                       </Badge>
                                     </div>
                                     <div className="text-sm font-medium">
-                                      {reservation.guests?.first_name} {reservation.guests?.last_name}
+                                      {reservation.guest_name || 'Nama tidak tersedia'}
                                     </div>
                                     <div className="text-xs text-gray-600 space-y-1">
                                       <div className="flex items-center">

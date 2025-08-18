@@ -98,8 +98,8 @@ export function useSmartPrefetch() {
       queryFn: async () => {
         const { data } = await supabase
           .from('reservations')
-          .select('status, check_in_date, check_out_date, total_amount')
-          .eq('property_id', propertyId)
+          .select('status, check_in_date, check_out_date, total_amount, rooms(property_id)')
+          .eq('rooms.property_id', propertyId)
         return data
       },
       staleTime: 2 * 60 * 1000, // 2 minutes
@@ -127,9 +127,9 @@ export function useSmartPrefetch() {
           .select(`
             *,
             guests (id, first_name, last_name, email, phone),
-            rooms (id, room_number, room_type)
+            rooms (id, room_number, room_type, property_id)
           `)
-          .eq('property_id', propertyId)
+          .eq('rooms.property_id', propertyId)
           .order('check_in_date', { ascending: true })
         return data
       },
@@ -156,13 +156,22 @@ export function useSmartPrefetch() {
     queryClient.prefetchQuery({
       queryKey: guestKeys.list({ propertyId }),
       queryFn: async () => {
+        // Get guests who have reservations in this property
         const { data } = await supabase
           .from('guests')
-          .select('*')
-          .eq('property_id', propertyId)
+          .select(`
+            *,
+            reservations!inner(rooms!inner(property_id))
+          `)
+          .eq('reservations.rooms.property_id', propertyId)
           .order('created_at', { ascending: false })
           .limit(50) // Limit for performance
-        return data
+        
+        // Remove nested reservation data for clean response
+        return data?.map(guest => {
+          const { reservations, ...cleanGuest } = guest
+          return cleanGuest
+        })
       },
       staleTime: 5 * 60 * 1000,
     })
@@ -202,9 +211,9 @@ export function useSmartPrefetch() {
             id, check_in_date, check_out_date, status, confirmation_number,
             adults, children,
             guests (first_name, last_name),
-            rooms (id, room_number, room_type)
+            rooms (id, room_number, room_type, property_id)
           `)
-          .eq('property_id', propertyId)
+          .eq('rooms.property_id', propertyId)
           .gte('check_in_date', startDate.toISOString().split('T')[0])
           .lte('check_out_date', endDate.toISOString().split('T')[0])
         return data
@@ -222,10 +231,10 @@ export function useSmartPrefetch() {
           .from('rooms')
           .select(`
             *,
-            housekeeping_tasks (*)
+            housekeeping (*)
           `)
           .eq('property_id', propertyId)
-          .in('status', ['dirty', 'cleaning', 'inspected'])
+          .in('status', ['dirty', 'inspected', 'out_of_order'])
         return data
       },
       staleTime: 2 * 60 * 1000,
@@ -243,9 +252,9 @@ export function useSmartPrefetch() {
           .select(`
             *,
             guests (first_name, last_name),
-            rooms (room_number, room_type)
+            rooms (room_number, room_type, property_id)
           `)
-          .eq('property_id', propertyId)
+          .eq('rooms.property_id', propertyId)
           .in('status', ['confirmed', 'checked_in'])
           .lte('check_in_date', today)
           .gte('check_out_date', today)
@@ -265,9 +274,9 @@ export function useSmartPrefetch() {
           .select(`
             *,
             guests (first_name, last_name, email),
-            rooms (room_number, room_type)
+            rooms (room_number, room_type, property_id)
           `)
-          .eq('property_id', propertyId)
+          .eq('rooms.property_id', propertyId)
           .order('created_at', { ascending: false })
           .limit(20)
         return data
@@ -287,8 +296,8 @@ export function useSmartPrefetch() {
       queryFn: async () => {
         const { data } = await supabase
           .from('reservations')
-          .select('status, check_in_date, total_amount, created_at')
-          .eq('property_id', propertyId)
+          .select('status, check_in_date, total_amount, created_at, rooms(property_id)')
+          .eq('rooms.property_id', propertyId)
           .gte('created_at', weekAgo.toISOString())
         return data
       },
