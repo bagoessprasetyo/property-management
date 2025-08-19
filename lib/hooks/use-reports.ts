@@ -89,19 +89,19 @@ export function useReports(propertyId?: string, filters?: {
   reportType?: string
 }) {
   return useQuery({
-    queryKey: reportKeys.list({ propertyId, ...filters }),
+    queryKey: reportKeys.list({ ...filters }),
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0]
       const currentMonth = new Date().toISOString().slice(0, 7)
       
       // Parallel queries for all report data
       const [occupancyData, revenueData, guestData, housekeepingData, paymentData, performanceData] = await Promise.all([
-        getOccupancyReport(propertyId, today),
-        getRevenueReport(propertyId, currentMonth),
-        getGuestReport(propertyId, currentMonth),
-        getHousekeepingReport(propertyId, today),
-        getPaymentReport(propertyId, currentMonth),
-        getPerformanceReport(propertyId, currentMonth)
+        getOccupancyReport(today),
+        getRevenueReport(currentMonth),
+        getGuestReport(currentMonth),
+        getHousekeepingReport(today),
+        getPaymentReport(currentMonth),
+        getPerformanceReport(currentMonth)
       ])
 
       const reports: Reports = {
@@ -131,17 +131,17 @@ export function useReport(type: keyof Reports, propertyId?: string, filters?: {
       
       switch (type) {
         case 'occupancy':
-          return await getOccupancyReport(propertyId, today)
+          return await getOccupancyReport(today)
         case 'revenue':
-          return await getRevenueReport(propertyId, currentMonth)
+          return await getRevenueReport(currentMonth)
         case 'guest':
-          return await getGuestReport(propertyId, currentMonth)
+          return await getGuestReport(currentMonth)
         case 'housekeeping':
-          return await getHousekeepingReport(propertyId, today)
+          return await getHousekeepingReport(today)
         case 'payment':
-          return await getPaymentReport(propertyId, currentMonth)
+          return await getPaymentReport(currentMonth)
         case 'performance':
-          return await getPerformanceReport(propertyId, currentMonth)
+          return await getPerformanceReport(currentMonth)
         default:
           return null
       }
@@ -156,10 +156,10 @@ async function getOccupancyReport(propertyId?: string, today?: string): Promise<
     .from('reservations')
     .select('check_in_date, check_out_date, status, adults, children, rooms(property_id)')
   
-  if (propertyId) {
-    roomQuery = roomQuery.eq('property_id', propertyId)
-    reservationQuery = reservationQuery.eq('rooms.property_id', propertyId)
-  }
+  // if (propertyId) {
+  //   roomQuery = roomQuery.eq('property_id', propertyId)
+  //   reservationQuery = reservationQuery.eq('rooms.property_id', propertyId)
+  // }
 
   const [roomsResult, reservationsResult] = await Promise.all([
     roomQuery,
@@ -198,22 +198,20 @@ async function getOccupancyReport(propertyId?: string, today?: string): Promise<
 
 async function getRevenueReport(propertyId?: string, currentMonth?: string): Promise<ReportData['revenue']> {
   let paymentQuery = supabase
-    .from('payments')
-    .select(`
-      amount, 
-      status, 
-      payment_date,
-      reservations (
-        rooms (
-          property_id
-        )
-      )
-    `)
-    .eq('status', 'completed')
+  .from('payments')
+  .select(`
+    amount,
+    status,
+    payment_date,
+    reservations!inner (
+      id
+    )
+  `)
+  .eq('status', 'completed');
 
-  if (propertyId) {
-    paymentQuery = paymentQuery.eq('reservations.rooms.property_id', propertyId)
-  }
+  // if (propertyId) {
+  //   paymentQuery = paymentQuery.eq('reservations.rooms.property_id', propertyId)
+  // }
 
   const { data: payments, error } = await paymentQuery
   if (error) throw error
@@ -228,15 +226,12 @@ async function getRevenueReport(propertyId?: string, currentMonth?: string): Pro
     .select(`
       total_amount,
       check_in_date,
-      check_out_date,
-      rooms (
-        property_id
-      )
+      check_out_date
     `)
 
-  if (propertyId) {
-    reservationQuery = reservationQuery.eq('rooms.property_id', propertyId)
-  }
+  // if (propertyId) {
+  //   reservationQuery = reservationQuery.eq('rooms.property_id', propertyId)
+  // }
 
   const { data: reservations, error: resError } = await reservationQuery
   if (resError) throw resError
@@ -283,9 +278,9 @@ async function getGuestReport(propertyId?: string, currentMonth?: string): Promi
 async function getHousekeepingReport(propertyId?: string, today?: string): Promise<ReportData['housekeeping']> {
   let housekeepingQuery = supabase.from('housekeeping').select('status, scheduled_date')
   
-  if (propertyId) {
-    housekeepingQuery = housekeepingQuery.eq('property_id', propertyId)
-  }
+  // if (propertyId) {
+  //   housekeepingQuery = housekeepingQuery.eq('property_id', propertyId)
+  // }
 
   const { data: tasks, error } = await housekeepingQuery
   if (error) throw error
@@ -310,18 +305,13 @@ async function getPaymentReport(propertyId?: string, currentMonth?: string): Pro
     .select(`
       amount, 
       payment_method, 
-      status,
-      reservations (
-        rooms (
-          property_id
-        )
-      )
+      status
     `)
     .eq('status', 'completed')
 
-  if (propertyId) {
-    paymentQuery = paymentQuery.eq('reservations.rooms.property_id', propertyId)
-  }
+  // if (propertyId) {
+  //   paymentQuery = paymentQuery.eq('reservations.rooms.property_id', propertyId)
+  // }
 
   const { data: payments, error } = await paymentQuery
   if (error) throw error
@@ -382,9 +372,9 @@ async function getOccupancyByRoomType(propertyId?: string) {
     .from('rooms')
     .select('room_type, status, is_active')
   
-  if (propertyId) {
-    roomQuery = roomQuery.eq('property_id', propertyId)
-  }
+  // if (propertyId) {
+  //   roomQuery = roomQuery.eq('property_id', propertyId)
+  // }
 
   const { data: rooms, error } = await roomQuery
   if (error) throw error
@@ -447,13 +437,13 @@ export function useOccupancyReport(propertyId?: string, filters?: {
       const today = new Date().toISOString().split('T')[0]
       
       // Get current occupancy data
-      const current = await getOccupancyReport(propertyId, today)
+      const current = await getOccupancyReport(today)
       
       // Get time series data for the last 7 days
-      const timeSeries = await getOccupancyTimeSeries(propertyId, 7)
+      const timeSeries = await getOccupancyTimeSeries('7')
       
       // Get occupancy by room type
-      const byRoomType = await getOccupancyByRoomType(propertyId)
+      const byRoomType = await getOccupancyByRoomType()
       
       return {
         current,
@@ -475,10 +465,10 @@ export function useRevenueReport(propertyId?: string, filters?: {
       const currentMonth = new Date().toISOString().slice(0, 7)
       
       // Get current revenue data
-      const current = await getRevenueReport(propertyId, currentMonth)
+      const current = await getRevenueReport(currentMonth)
       
       // Get time series data for the last 7 days
-      const timeSeries = await getRevenueTimeSeries(propertyId, 7)
+      const timeSeries = await getRevenueTimeSeries('7')
       
       // Get revenue by booking source (placeholder for now)
       const totalRevenue = current?.total_revenue || 0

@@ -104,7 +104,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="bg-white p-6">
       <div className={cn(
         "mx-auto space-y-6 transition-all duration-300",
         // Responsive container width based on sidebar state
@@ -282,7 +282,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <Button onClick={handleSaveProperty} className="bg-warm-brown-600 hover:bg-warm-brown-700">
+                <Button onClick={handleSaveProperty} className="bg-blue-400 hover:bg-blue-600">
                   <Save className="w-4 h-4 mr-2" />
                   Simpan Informasi Properti
                 </Button>
@@ -474,7 +474,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <Button onClick={handleSaveNotifications} className="bg-warm-brown-600 hover:bg-warm-brown-700">
+                <Button onClick={handleSaveNotifications} className="bg-blue-400 hover:bg-blue-600">
                   <Save className="w-4 h-4 mr-2" />
                   Simpan Pengaturan Notifikasi
                 </Button>
@@ -556,7 +556,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <Button onClick={handleSaveUsers} className="bg-warm-brown-600 hover:bg-warm-brown-700">
+                <Button onClick={handleSaveUsers} className="bg-blue-400 hover:bg-blue-600">
                   <Save className="w-4 h-4 mr-2" />
                   Simpan Pengaturan Pengguna
                 </Button>

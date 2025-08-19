@@ -149,7 +149,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white">
       <div className={cn(
         "mx-auto space-y-6 transition-all duration-300",
         // Responsive container width based on sidebar state
@@ -188,7 +188,7 @@ export default function DashboardPage() {
             </Button>
             <Button
               size="sm"
-              className="bg-warm-brown-600 hover:bg-warm-brown-700"
+              className="bg-blue-600 hover:bg-blue-700"
               onClick={handleNewBooking}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -201,7 +201,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Occupancy Rate */}
           <Card 
-            className="hover:shadow-md transition-shadow cursor-pointer"
+            className="hover:shadow-md border-0 shadow-lg transition-shadow cursor-pointer"
             onClick={handleViewRooms}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -242,7 +242,7 @@ export default function DashboardPage() {
 
           {/* Arrivals Today */}
           <Card 
-            className="hover:shadow-md transition-shadow cursor-pointer"
+            className="hover:shadow-md transition-shadow cursor-pointer border-0 shadow-lg"
             onClick={handleCheckIn}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -265,7 +265,7 @@ export default function DashboardPage() {
 
           {/* Departures Today */}
           <Card 
-            className="hover:shadow-md transition-shadow cursor-pointer"
+            className="hover:shadow-md transition-shadow cursor-pointer border-0 shadow-lg"
             onClick={handleCheckOut}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -288,7 +288,7 @@ export default function DashboardPage() {
 
           {/* Revenue Today */}
           <Card 
-            className="hover:shadow-md transition-shadow cursor-pointer"
+            className="hover:shadow-md transition-shadow cursor-pointer border-0 shadow-lg"
             onClick={handleViewPayments}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -331,7 +331,7 @@ export default function DashboardPage() {
         {/* Secondary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card 
-            className="hover:shadow-md transition-shadow cursor-pointer"
+            className="hover:shadow-md transition-shadow cursor-pointer border-0 shadow-lg"
             onClick={handleHousekeeping}
           >
             <CardContent className="p-4">
@@ -348,7 +348,7 @@ export default function DashboardPage() {
           </Card>
           
           <Card 
-            className="hover:shadow-md transition-shadow cursor-pointer"
+            className="hover:shadow-md border-0 shadow-lg transition-shadow cursor-pointer"
             onClick={handleViewRooms}
           >
             <CardContent className="p-4">
@@ -363,7 +363,7 @@ export default function DashboardPage() {
           </Card>
           
           <Card 
-            className="hover:shadow-md transition-shadow cursor-pointer"
+            className="hover:shadow-md transition-shadow cursor-pointer border-0 shadow-lg"
             onClick={handleReports}
           >
             <CardContent className="p-4">
@@ -388,7 +388,7 @@ export default function DashboardPage() {
 
           {/* Recent Activities Tab */}
           <TabsContent value="activities" className="space-y-4">
-            <Card>
+            <Card className='border-0 shadow-lg'>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -563,8 +563,8 @@ export default function DashboardPage() {
               >
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <div className="p-3 rounded-full bg-warm-brown-100">
-                      <Users className="w-6 h-6 text-warm-brown-600" />
+                    <div className="p-3 rounded-full bg-blue-200">
+                      <Users className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
                       <h3 className="font-medium">Booking Baru</h3>

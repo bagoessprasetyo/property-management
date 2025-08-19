@@ -158,13 +158,13 @@ export function Header({ onMenuClick, onCommandClick }: HeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-warm-brown-600 text-white">
+                  <AvatarFallback className="bg-blue-600 text-white">
                     {user?.email?.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="bg-white w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">Admin Hotel</p>

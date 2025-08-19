@@ -171,7 +171,7 @@ export default function ReservationsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white">
       <div className={cn(
         "mx-auto space-y-6 transition-all duration-300",
         // Responsive container width based on sidebar state
@@ -209,7 +209,7 @@ export default function ReservationsPage() {
               </Button>
             </div>
             <Button 
-              className="bg-warm-brown-600 hover:bg-warm-brown-700"
+              className="bg-blue-50 text-blue-700 border-blue-200"
               onClick={() => setShowCreateForm(true)}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -220,7 +220,7 @@ export default function ReservationsPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -232,7 +232,7 @@ export default function ReservationsPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -251,7 +251,7 @@ export default function ReservationsPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -270,7 +270,7 @@ export default function ReservationsPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -294,7 +294,7 @@ export default function ReservationsPage() {
         </div>
 
         {/* Filters and Search */}
-        <Card>
+        <Card className='border-0 shadow-lg'>
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">

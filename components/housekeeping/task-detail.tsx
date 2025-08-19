@@ -150,7 +150,7 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
   if (taskLoading || !task) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="bg-white max-w-4xl">
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3 text-gray-400" />
@@ -167,7 +167,7 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+        <DialogContent className="bg-white max-w-6xl max-h-[90vh] overflow-hidden">
           <DialogHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -462,7 +462,7 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
                   <CardTitle className="text-base font-medium">Riwayat Tugas</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 border rounded-lg">
+                  <div className="flex items-center gap-3 p-3 border-0 shadow-sm rounded-lg">
                     <Sparkles className="w-5 h-5 text-blue-500" />
                     <div className="flex-1">
                       <p className="font-medium">Tugas Dibuat</p>
@@ -479,7 +479,7 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
                   </div>
 
                   {task.status === 'in_progress' && (
-                    <div className="flex items-center gap-3 p-3 border rounded-lg">
+                    <div className="flex items-center gap-3 p-3 border-0 shadow-sm rounded-lg">
                       <Play className="w-5 h-5 text-blue-500" />
                       <div className="flex-1">
                         <p className="font-medium">Tugas Dimulai</p>
@@ -489,7 +489,7 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
                   )}
 
                   {task.completed_at && (
-                    <div className="flex items-center gap-3 p-3 border rounded-lg">
+                    <div className="flex items-center gap-3 p-3 border-0 shadow-sm rounded-lg">
                       <CheckCircle className="w-5 h-5 text-green-500" />
                       <div className="flex-1">
                         <p className="font-medium">Tugas Selesai</p>
@@ -507,7 +507,7 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
                   )}
 
                   {task.status === 'inspected' && (
-                    <div className="flex items-center gap-3 p-3 border rounded-lg bg-purple-50">
+                    <div className="flex items-center gap-3 p-3 border-0 shadow-sm rounded-lg bg-purple-50">
                       <CheckSquare className="w-5 h-5 text-purple-500" />
                       <div className="flex-1">
                         <p className="font-medium text-purple-800">Tugas Diperiksa</p>
@@ -519,7 +519,7 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
                   )}
 
                   {task.status === 'failed_inspection' && (
-                    <div className="flex items-center gap-3 p-3 border rounded-lg bg-red-50">
+                    <div className="flex items-center gap-3 p-3 border-0 shadow-sm rounded-lg bg-red-50">
                       <AlertTriangle className="w-5 h-5 text-red-500" />
                       <div className="flex-1">
                         <p className="font-medium text-red-800">Perlu Diperbaiki</p>

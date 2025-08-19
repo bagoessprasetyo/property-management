@@ -233,7 +233,7 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="bg-white max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader className="pb-4">
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
             <div className="p-1.5 bg-gray-100 rounded-md">
@@ -266,7 +266,7 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
                             <SelectValue placeholder="Pilih kamar" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className='bg-white'>
                           {roomsLoading ? (
                             <div className="flex items-center justify-center p-4">
                               <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -317,7 +317,7 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
                             <SelectValue placeholder="Pilih jenis tugas" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className='bg-white'>
                           {TASK_TYPES.map(type => {
                             const Icon = type.icon
                             return (
@@ -340,7 +340,7 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
               {/* Selected Room Info */}
               {selectedRoom && (
                 <Card className="bg-gray-50 border-gray-200">
-                  <CardContent className="p-4">
+                  <CardContent className="bg-white p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center">
                         <Bed className="w-5 h-5 text-gray-600" />
@@ -482,7 +482,7 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
                             <SelectValue placeholder="Pilih status" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className='bg-white'>
                           {TASK_STATUSES.map(status => (
                             <SelectItem key={status.value} value={status.value}>
                               <Badge className={status.color}>

@@ -150,7 +150,7 @@ export function QuickActions({
         {/* Primary Action */}
         <Button 
           onClick={onCreateReservation}
-          className="bg-warm-brown-600 hover:bg-warm-brown-700"
+          className="bg-blue-50 text-blue-700 border-blue-200"
           size="sm"
         >
           <Plus className="w-4 h-4 mr-2" />

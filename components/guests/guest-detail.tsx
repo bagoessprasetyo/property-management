@@ -102,10 +102,10 @@ export const GuestDetail = memo(function GuestDetail({ guestId, open, onOpenChan
   if (guestLoading || !guest) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="bg-white max-w-4xl">
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-warm-brown-600" />
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-blue-600" />
               <p className="text-gray-600">Memuat detail tamu...</p>
             </div>
           </div>
@@ -119,13 +119,13 @@ export const GuestDetail = memo(function GuestDetail({ guestId, open, onOpenChan
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden">
-          <DialogHeader className="relative overflow-hidden rounded-t-lg bg-gradient-to-br from-warm-brown-50 via-warm-brown-100 to-amber-50 p-6 -m-6 mb-6 border-b border-warm-brown-200">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-warm-brown-100/20 via-transparent to-transparent" />
+        <DialogContent className="bg-white max-w-7xl max-h-[95vh] overflow-hidden">
+          <DialogHeader className="relative overflow-hidden rounded-t-lg bg-gradient-to-br from-warm-blue-50 via-warm-blue-100 to-amber-50 p-6 -m-6 mb-6 border-b border-warm-blue-200">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-warm-blue-100/20 via-transparent to-transparent" />
             <div className="relative flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="w-16 h-16 bg-gradient-to-br from-warm-brown-200 to-warm-brown-300 rounded-xl flex items-center justify-center text-warm-brown-700 font-bold text-xl shadow-lg">
+                  <div className="w-16 h-16 bg-gradient-to-br from-warm-blue-200 to-warm-blue-300 rounded-xl flex items-center justify-center text-warm-blue-700 font-bold text-xl shadow-lg">
                     {guest.first_name.charAt(0)}{guest.last_name.charAt(0)}
                   </div>
                   {isVip && (
@@ -155,7 +155,7 @@ export const GuestDetail = memo(function GuestDetail({ guestId, open, onOpenChan
                         VIP Guest
                       </Badge>
                     )}
-                    <div className="flex items-center text-sm text-warm-brown-700 bg-warm-brown-100 px-3 py-1 rounded-full">
+                    <div className="flex items-center text-sm text-warm-blue-700 bg-warm-blue-100 px-3 py-1 rounded-full">
                       <Calendar className="w-3 h-3 mr-1" />
                       Member sejak {new Date(guest.created_at).toLocaleDateString('id-ID', {
                         month: 'long', year: 'numeric'
@@ -170,7 +170,7 @@ export const GuestDetail = memo(function GuestDetail({ guestId, open, onOpenChan
                   variant="outline" 
                   size="sm" 
                   onClick={handleEdit}
-                  className="border-warm-brown-200 text-warm-brown-700 hover:bg-warm-brown-50"
+                  className="border-warm-blue-200 text-warm-blue-700 hover:bg-warm-blue-50"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Tamu

@@ -24,7 +24,8 @@ import {
   TrendingUp,
   ChevronLeft,
   Menu,
-  LogOut
+  LogOut,
+  ChefHat
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -69,6 +70,12 @@ const navigation = [
     count: null,
   },
   {
+    name: 'Restoran',
+    href: '/dashboard/restaurant',
+    icon: ChefHat,
+    count: null,
+  },
+  {
     name: 'Laporan',
     href: '/dashboard/reports',
     icon: FileText,
@@ -99,7 +106,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Logo and collapse button */}
       <div className="flex items-center justify-between p-6 border-b border-gray-200">
         <div className="flex items-center space-x-2">
-          <Hotel className="w-8 h-8 text-warm-brown-600" />
+          <Hotel className="w-8 h-8 text-blue-600" />
           {(!isCollapsed || mobile) && (
             <div>
               <h1 className="text-xl font-bold text-gray-900">InnSync</h1>
@@ -134,7 +141,7 @@ export function Sidebar({ className }: SidebarProps) {
                 className={cn(
                   "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                   isActive
-                    ? "bg-warm-brown-100 text-warm-brown-900 border border-warm-brown-200"
+                    ? "bg-blue-100 text-blue-900 border border-blue-200"
                     : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 )}
                 onClick={() => mobile && setIsOpen(false)}
@@ -149,7 +156,7 @@ export function Sidebar({ className }: SidebarProps) {
                     {item.count && (
                       <Badge 
                         variant="secondary" 
-                        className="ml-auto bg-warm-brown-100 text-warm-brown-700"
+                        className="ml-auto bg-blue-100 text-blue-700"
                       >
                         {item.count}
                       </Badge>
@@ -165,7 +172,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* User info and logout */}
       <div className="border-t border-gray-200 p-4 space-y-3">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-warm-brown-600 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
             <span className="text-sm font-medium text-white">
               {user?.email?.charAt(0).toUpperCase() || 'A'}
             </span>

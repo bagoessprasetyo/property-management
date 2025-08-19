@@ -286,7 +286,7 @@ export function ReservationForm({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="bg-white max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
@@ -330,17 +330,17 @@ export function ReservationForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Pilih Tamu *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Pilih tamu yang sudah terdaftar" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className='bg-white hover:bg-blue'>
                           {guests && guests.length > 0 ? (
                             guests.map(guest => (
-                              <SelectItem key={guest.id} value={guest.id}>
-                                <div className="flex items-center gap-3">
+                              <SelectItem key={guest.id} value={guest.id} className='hover:bg-blue-50'>
+                                <div className="flex items-center gap-3 hover:bg-blue-50">
                                   <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
                                     <User className="w-4 h-4 text-gray-600" />
                                   </div>
@@ -499,7 +499,7 @@ export function ReservationForm({
                         </Button>
                         <Button
                           type="button"
-                          variant="outline"
+                          variant="ghost"
                           onClick={() => setShowGuestForm(false)}
                         >
                           Batal
@@ -929,11 +929,11 @@ export function ReservationForm({
             </Tabs>
 
             <DialogFooter className="gap-2">
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button type="button" variant="ghost" onClick={handleClose}>
                 <X className="w-4 h-4 mr-2" />
                 Batal
               </Button>
-              <Button type="submit" disabled={isLoading} className="bg-warm-brown-600 hover:bg-warm-brown-700">
+              <Button type="submit" disabled={isLoading} className="bg-blue-50 text-blue-700 border-blue-200">
                 {isLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

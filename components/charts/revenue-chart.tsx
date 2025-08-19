@@ -54,7 +54,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Revenue Time Series */}
-      <Card>
+      <Card className='shadow-lg border-0'>
         <CardHeader>
           <CardTitle className="flex items-center">
             <LineChartIcon className="w-5 h-5 mr-2" />
@@ -114,7 +114,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
       </Card>
 
       {/* Revenue by Source */}
-      <Card>
+      <Card className='shadow-lg border-0'>
         <CardHeader>
           <CardTitle className="flex items-center">
             <PieChart className="w-5 h-5 mr-2" />

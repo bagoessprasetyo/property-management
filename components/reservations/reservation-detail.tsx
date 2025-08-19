@@ -35,6 +35,7 @@ import {
   Settings as SettingsIcon
 } from 'lucide-react'
 import { ReservationForm } from './reservation-form'
+import { CheckoutValidation } from '@/components/restaurant/billing/checkout-validation'
 import { logger } from '@/lib/utils/logger'
 
 interface ReservationDetailProps {
@@ -46,6 +47,7 @@ interface ReservationDetailProps {
 export function ReservationDetail({ reservationId, open, onOpenChange }: ReservationDetailProps) {
   const [showEditForm, setShowEditForm] = useState(false)
   const [isConfirming, setIsConfirming] = useState(false)
+  const [showCheckoutValidation, setShowCheckoutValidation] = useState(false)
 
   const { data: reservation, isLoading: reservationLoading } = useReservation(reservationId)
   const updateStatus = useUpdateReservationStatus()
@@ -58,6 +60,12 @@ export function ReservationDetail({ reservationId, open, onOpenChange }: Reserva
   const handleStatusChange = async (newStatus: any) => {
     if (!reservation) return
 
+    // For checkout, validate restaurant bills first
+    if (newStatus === 'checked_out') {
+      setShowCheckoutValidation(true)
+      return
+    }
+
     try {
       await updateStatus.mutateAsync({
         id: reservation.id,
@@ -66,6 +74,21 @@ export function ReservationDetail({ reservationId, open, onOpenChange }: Reserva
       logger.info('Reservation status updated', { reservationId: reservation.id, newStatus })
     } catch (error) {
       logger.error('Failed to update reservation status', error)
+    }
+  }
+
+  const handleConfirmCheckout = async () => {
+    if (!reservation) return
+
+    try {
+      await updateStatus.mutateAsync({
+        id: reservation.id,
+        status: 'checked_out'
+      })
+      logger.info('Reservation checked out after bill validation', { reservationId: reservation.id })
+      setShowCheckoutValidation(false)
+    } catch (error) {
+      logger.error('Failed to checkout reservation', error)
     }
   }
 
@@ -664,6 +687,15 @@ export function ReservationDetail({ reservationId, open, onOpenChange }: Reserva
         open={showEditForm}
         onOpenChange={setShowEditForm}
         onSuccess={() => setShowEditForm(false)}
+      />
+
+      {/* Checkout Validation */}
+      <CheckoutValidation
+        reservationId={reservation.id}
+        open={showCheckoutValidation}
+        onOpenChange={setShowCheckoutValidation}
+        onConfirmCheckout={handleConfirmCheckout}
+        guestName={`${reservation.guests?.first_name || ''} ${reservation.guests?.last_name || ''}`.trim() || 'Guest'}
       />
     </>
   )

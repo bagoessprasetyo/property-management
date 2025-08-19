@@ -275,7 +275,7 @@ export const RoomForm = memo(function RoomForm({ room, open, onOpenChange, onSuc
     
     return (
       <div className={`flex items-center justify-center w-6 h-6 rounded-full mr-2 transition-colors ${
-        completed ? 'bg-green-500 text-white' : currentTab === tabName ? 'bg-warm-brown-600 text-white' : 'bg-gray-200 text-gray-500'
+        completed ? 'bg-green-500 text-white' : currentTab === tabName ? 'bg-blue-400 text-white' : 'bg-gray-200 text-gray-500'
       }`}>
         {completed ? <Check className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
       </div>
@@ -307,12 +307,12 @@ export const RoomForm = memo(function RoomForm({ room, open, onOpenChange, onSuc
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden">
-        <DialogHeader className="relative overflow-hidden rounded-t-lg bg-gradient-to-r from-warm-brown-50 to-amber-50 p-6 -m-6 mb-6 border-b border-warm-brown-200">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-warm-brown-100/20 via-transparent to-transparent" />
+      <DialogContent className="bg-white max-w-5xl max-h-[95vh] overflow-hidden">
+        <DialogHeader className="relative overflow-hidden rounded-t-lg bg-gradient-to-r from-blue-50 to-amber-50 p-6 -m-6 mb-6 border-b border-blue-200">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100/20 via-transparent to-transparent" />
           <div className="relative">
             <DialogTitle className="flex items-center gap-3 text-2xl">
-              <div className="p-3 bg-gradient-to-br from-warm-brown-600 to-warm-brown-700 rounded-xl shadow-lg">
+              <div className="p-3 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg">
                 <Bed className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -324,7 +324,7 @@ export const RoomForm = memo(function RoomForm({ room, open, onOpenChange, onSuc
                 )}
               </div>
             </DialogTitle>
-            <DialogDescription className="mt-3 text-warm-brown-700">
+            <DialogDescription className="mt-3 text-warm-blue-400">
               {isEditing 
                 ? 'Perbarui informasi kamar yang sudah ada'
                 : 'Konfigurasikan kamar baru dengan fasilitas dan pengaturan lengkap'
@@ -335,8 +335,8 @@ export const RoomForm = memo(function RoomForm({ room, open, onOpenChange, onSuc
             {!isEditing && (
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-warm-brown-600 font-medium">Progress Konfigurasi</span>
-                  <span className="text-warm-brown-600">{progress}%</span>
+                  <span className="text-blue-600 font-medium">Progress Konfigurasi</span>
+                  <span className="text-blue-400">{progress}%</span>
                 </div>
                 <Progress value={progress} className="h-2" />
               </div>
@@ -430,11 +430,11 @@ export const RoomForm = memo(function RoomForm({ room, open, onOpenChange, onSuc
                               <SelectValue placeholder="Pilih tipe kamar" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className='bg-white'>
                             {ROOM_TYPES.map(type => (
-                              <SelectItem key={type} value={type}>
+                              <SelectItem key={type} value={type} className='hover:bg-blue-200'>
                                 <div className="flex items-center gap-2">
-                                  <Bed className="w-4 h-4 text-warm-brown-600" />
+                                  <Bed className="w-4 h-4 text-blue-600" />
                                   <span>{type}</span>
                                 </div>
                               </SelectItem>
@@ -599,8 +599,8 @@ export const RoomForm = memo(function RoomForm({ room, open, onOpenChange, onSuc
                             key={amenity.id}
                             className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
                               isSelected 
-                                ? 'border-warm-brown-500 bg-gradient-to-br from-warm-brown-50 to-warm-brown-100 shadow-md' 
-                                : 'border-gray-200 hover:border-warm-brown-300 hover:bg-gray-50'
+                                ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-md' 
+                                : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
                             }`}
                             onClick={() => toggleAmenity(amenity.id)}
                           >
@@ -608,14 +608,14 @@ export const RoomForm = memo(function RoomForm({ room, open, onOpenChange, onSuc
                               <div className="flex items-center gap-3">
                                 <div className={`p-2 rounded-lg transition-colors ${
                                   isSelected 
-                                    ? 'bg-warm-brown-600 text-white' 
+                                    ? 'bg-blue-600 text-white' 
                                     : 'bg-gray-100 text-gray-400'
                                 }`}>
                                   <Icon className="w-4 h-4" />
                                 </div>
                                 <div className="flex-1">
                                   <span className={`text-sm font-medium ${
-                                    isSelected ? 'text-warm-brown-900' : 'text-gray-700'
+                                    isSelected ? 'text-blue-600' : 'text-gray-700'
                                   }`}>
                                     {amenity.label}
                                   </span>
@@ -776,7 +776,7 @@ export const RoomForm = memo(function RoomForm({ room, open, onOpenChange, onSuc
                   <Button 
                     type="submit" 
                     disabled={isLoading || !tabStatus.basic} 
-                    className="bg-gradient-to-r from-warm-brown-600 to-warm-brown-700 hover:from-warm-brown-700 hover:to-warm-brown-800 shadow-lg min-w-32"
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg min-w-32 text-slate-700"
                   >
                     {isLoading ? (
                       <>

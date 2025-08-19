@@ -37,11 +37,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-warm-brown-50 via-white to-terracotta-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-terracotta-50 p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Logo and Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-warm-brown-600 rounded-2xl mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
             <Hotel className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
@@ -79,7 +79,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-white border-gray-200 focus:border-warm-brown-400 focus:ring-warm-brown-400"
+                  className="bg-white border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                 />
               </div>
               
@@ -93,7 +93,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="bg-white border-gray-200 focus:border-warm-brown-400 focus:ring-warm-brown-400 pr-10"
+                    className="bg-white border-gray-200 focus:border-blue-400 focus:ring-blue-400 pr-10"
                   />
                   <Button
                     type="button"
@@ -122,7 +122,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-warm-brown-600 hover:bg-warm-brown-700 text-white"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 disabled={loading}
               >
                 {loading ? (

@@ -291,7 +291,7 @@ export const GuestForm = memo(function GuestForm({ guest, open, onOpenChange, on
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden">
+      <DialogContent className="bg-white max-w-5xl max-h-[95vh] overflow-hidden">
         <DialogHeader className="relative overflow-hidden rounded-t-lg bg-gradient-to-r from-warm-brown-50 to-amber-50 p-6 -m-6 mb-6 border-b border-warm-brown-200">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-warm-brown-100/20 via-transparent to-transparent" />
           <div className="relative">

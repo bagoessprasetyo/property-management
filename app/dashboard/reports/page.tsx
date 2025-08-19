@@ -68,7 +68,7 @@ export default function ReportsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="bg-white p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -82,7 +82,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="bg-white p-6">
       <div className={cn(
         "mx-auto space-y-6 transition-all duration-300",
         // Responsive container width based on sidebar state
@@ -111,7 +111,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Report Type and Period Filters */}
-        <Card>
+        <Card className='shadow-lg border-0'>
           <CardContent className="p-4">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="flex-1">
@@ -122,7 +122,7 @@ export default function ReportsPage() {
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih jenis laporan" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className='bg-white'>
                     {reportTypes.map(type => {
                       const Icon = type.icon
                       return (
@@ -146,7 +146,7 @@ export default function ReportsPage() {
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="Periode" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className='bg-white'>
                     <SelectItem value="day">Harian</SelectItem>
                     <SelectItem value="week">Mingguan</SelectItem>
                     <SelectItem value="month">Bulanan</SelectItem>
@@ -164,7 +164,7 @@ export default function ReportsPage() {
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="Rentang" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className='bg-white'>
                     <SelectItem value="current">Saat Ini</SelectItem>
                     <SelectItem value="previous">Sebelumnya</SelectItem>
                     <SelectItem value="ytd">Year to Date</SelectItem>
@@ -178,7 +178,7 @@ export default function ReportsPage() {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -202,7 +202,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -224,7 +224,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -248,7 +248,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -298,7 +298,7 @@ export default function ReportsPage() {
           )}
           
           {(reportType === 'guest' || reportType === 'housekeeping' || reportType === 'performance') && (
-            <Card>
+            <Card className='border-0 shadow-lg'>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <BarChart3 className="w-5 h-5 mr-2" />
@@ -323,7 +323,7 @@ export default function ReportsPage() {
 
         {/* Legacy Detail Section - Keep for reference */}
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mt-6">
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardHeader>
               <CardTitle className="flex items-center">
                 <PieChart className="w-5 h-5 mr-2" />
@@ -338,7 +338,7 @@ export default function ReportsPage() {
           </Card>
 
           {/* Details Section */}
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardHeader>
               <CardTitle className="flex items-center">
                 <PieChart className="w-5 h-5 mr-2" />
@@ -438,7 +438,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Quick Reports */}
-        <Card>
+        <Card className='border-0 shadow-lg'>
           <CardHeader>
             <CardTitle className="flex items-center">
               <FileText className="w-5 h-5 mr-2" />

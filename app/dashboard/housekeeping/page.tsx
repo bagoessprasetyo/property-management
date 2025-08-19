@@ -214,7 +214,7 @@ export default function HousekeepingPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="bg-white p-6">
       <div className={cn(
         "mx-auto space-y-6 transition-all duration-300",
         // Responsive container width based on sidebar state
@@ -309,7 +309,7 @@ export default function HousekeepingPage() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="border-0 shadow-sm bg-white">
+          <Card className="border-0 shadow-lg bg-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -323,7 +323,7 @@ export default function HousekeepingPage() {
             </CardContent>
           </Card>
           
-          <Card className="border-0 shadow-sm bg-white">
+          <Card className="border-0 shadow-lg bg-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -339,7 +339,7 @@ export default function HousekeepingPage() {
             </CardContent>
           </Card>
           
-          <Card className="border-0 shadow-sm bg-white">
+          <Card className="border-0 shadow-lg bg-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -355,7 +355,7 @@ export default function HousekeepingPage() {
             </CardContent>
           </Card>
           
-          <Card className="border-0 shadow-sm bg-white">
+          <Card className="border-0 shadow-lg bg-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -386,7 +386,7 @@ export default function HousekeepingPage() {
           {/* All Tasks Tab */}
           <TabsContent value="tasks" className="space-y-6">
             {/* Filters and Search */}
-            <Card className="border-0 shadow-sm">
+            <Card className="border-0 shadow-lg">
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row gap-4">
                   <div className="flex-1">
@@ -447,14 +447,14 @@ export default function HousekeepingPage() {
             </Card>
 
             {/* Tasks Table */}
-            <Card className="border-0 shadow-sm">
+            <Card className="border-0 shadow-lg">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg font-medium">Daftar Tugas Housekeeping</CardTitle>
                 <CardDescription>
                   {filteredTasks.length} dari {tasks?.length || 0} tugas ditampilkan
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent className="p-4">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>

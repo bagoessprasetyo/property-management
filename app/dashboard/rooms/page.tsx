@@ -279,7 +279,7 @@ export default function RoomsPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-warm-brown-600" />
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-blue-600 bg-blue-100 p-1 rounded-full" />
               <p className="text-gray-600">Memuat data kamar...</p>
             </div>
           </div>
@@ -289,7 +289,7 @@ export default function RoomsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="bg-white p-6">
       <div className={cn(
         "mx-auto space-y-6 transition-all duration-300",
         // Responsive container width based on sidebar state
@@ -298,17 +298,17 @@ export default function RoomsPage() {
           : "max-w-7xl" // Standard width when sidebar is expanded
       )}>
         {/* Header */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-warm-brown-50 via-warm-brown-100 to-amber-50 p-8 border border-warm-brown-200/50">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-warm-brown-100/20 via-transparent to-transparent" />
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 via-blue-100 to-amber-50 p-8 border border-blue-200/50">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100/20 via-transparent to-transparent" />
           <div className="relative flex items-center justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-br from-warm-brown-600 to-warm-brown-700 rounded-xl shadow-lg">
+                <div className="p-3 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg">
                   <Bed className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <h2 className="text-3xl font-bold text-gray-900">Manajemen Kamar</h2>
-                  <p className="text-warm-brown-700">
+                  <p className="text-blue-700">
                     Kelola kamar, fasilitas, dan status housekeeping dengan mudah
                   </p>
                 </div>
@@ -321,7 +321,7 @@ export default function RoomsPage() {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      className="border-warm-brown-200 text-warm-brown-600 hover:bg-warm-brown-50"
+                      className="border-blue-200 text-blue-600 hover:bg-blue-50"
                     >
                       <Keyboard className="w-4 h-4" />
                     </Button>
@@ -348,7 +348,7 @@ export default function RoomsPage() {
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="outline" 
-                    className="border-warm-brown-200 text-warm-brown-700 hover:bg-warm-brown-50"
+                    className="border-green-200 text-green-700 hover:bg-green-50"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Export
@@ -376,7 +376,7 @@ export default function RoomsPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
               <Button 
-                className="bg-gradient-to-r from-warm-brown-600 to-warm-brown-700 hover:from-warm-brown-700 hover:to-warm-brown-800 shadow-lg"
+                className="bg-gradient-to-r from-blue-200  hover:from-blue-400 hover:to-blue-600 shadow-lg"
                 onClick={() => setShowCreateForm(true)}
                 aria-label="Tambah kamar baru (Cmd/Ctrl+N)"
               >
@@ -535,7 +535,7 @@ export default function RoomsPage() {
         </Card>
 
         {/* Rooms Display */}
-        <Card>
+        <Card className='border-0 shadow-lg'>
           <CardHeader>
             <CardTitle>Daftar Kamar</CardTitle>
             <CardDescription>
@@ -571,8 +571,8 @@ export default function RoomsPage() {
                     filteredRooms.map((room, index) => (
                       <TableRow 
                         key={room.id} 
-                        className={`${selectedRowIndex === index ? 'bg-warm-brown-50 border-warm-brown-200' : ''} 
-                          hover:bg-gray-50 focus-within:bg-warm-brown-50 cursor-pointer transition-colors`}
+                        className={`${selectedRowIndex === index ? 'bg-blue-50 border-blue-200' : ''} 
+                          hover:bg-gray-50 focus-within:bg-blue-50 cursor-pointer transition-colors`}
                         tabIndex={0}
                         role="button"
                         aria-label={`Kamar ${room.room_number}, ${room.room_type}, Kapasitas ${room.capacity}`}
@@ -649,7 +649,7 @@ export default function RoomsPage() {
                       <Card 
                         key={room.id} 
                         className={`border-0 bg-gradient-to-br from-white to-gray-50 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group ${
-                          selectedRowIndex === index ? 'ring-2 ring-warm-brown-500 bg-warm-brown-50' : ''
+                          selectedRowIndex === index ? 'ring-2 ring-blue-500 bg-blue-50' : ''
                         }`}
                         tabIndex={0}
                         role="button"
@@ -666,7 +666,7 @@ export default function RoomsPage() {
                           {/* Room Header */}
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
-                              <div className="p-3 bg-gradient-to-br from-warm-brown-600 to-warm-brown-700 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow">
+                              <div className="p-3 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow">
                                 <Bed className="w-5 h-5 text-white" />
                               </div>
                               <div>

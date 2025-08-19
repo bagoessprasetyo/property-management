@@ -124,7 +124,7 @@ export const RoomDetail = memo(function RoomDetail({ roomId, open, onOpenChange 
   if (roomLoading || !room) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="bg-white max-w-4xl">
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-warm-brown-600" />
@@ -139,12 +139,12 @@ export const RoomDetail = memo(function RoomDetail({ roomId, open, onOpenChange 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[95vw] md:max-w-6xl max-h-[95vh] overflow-hidden">
-          <DialogHeader className="relative overflow-hidden rounded-t-lg bg-gradient-to-br from-warm-brown-50 via-warm-brown-100 to-amber-50 p-6 -m-6 mb-6 border-b border-warm-brown-200">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-warm-brown-100/20 via-transparent to-transparent" />
+        <DialogContent className="bg-white max-w-[95vw] md:max-w-6xl max-h-[95vh] overflow-hidden">
+          <DialogHeader className="relative overflow-hidden rounded-t-lg bg-gradient-to-br from-blue-50 via-blue-100 to-blue-50 p-6 -m-6 mb-6 border-b border-blue-200">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100/20 via-transparent to-transparent" />
             <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="p-3 sm:p-4 bg-gradient-to-br from-warm-brown-600 to-warm-brown-700 rounded-xl shadow-lg">
+                <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg">
                   <Bed className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
                 <div className="space-y-2">
@@ -152,18 +152,18 @@ export const RoomDetail = memo(function RoomDetail({ roomId, open, onOpenChange 
                     Kamar {room.room_number}
                   </DialogTitle>
                   <DialogDescription className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <Badge className="bg-warm-brown-100 text-warm-brown-800 border-warm-brown-200">
+                    <Badge className="bg-blue-100 text-blue-800 border-blue-200">
                       {room.room_type}
                     </Badge>
                     {getStatusBadge(room.status)}
                     {!room.is_active && (
                       <Badge variant="destructive">Tidak Aktif</Badge>
                     )}
-                    <div className="flex items-center gap-1 text-sm text-warm-brown-700">
+                    <div className="flex items-center gap-1 text-sm text-slate-700">
                       <Users className="w-4 h-4" />
                       <span>{room.capacity} tamu</span>
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-warm-brown-700">
+                    <div className="flex items-center gap-1 text-sm text-slate-700">
                       <DollarSign className="w-4 h-4" />
                       <span className="hidden sm:inline">{formatIDR(room.base_rate)}/malam</span>
                       <span className="sm:hidden">{formatIDR(room.base_rate)}</span>
@@ -177,7 +177,7 @@ export const RoomDetail = memo(function RoomDetail({ roomId, open, onOpenChange 
                   variant="outline" 
                   size="sm" 
                   onClick={handleEdit}
-                  className="border-warm-brown-200 text-warm-brown-700 hover:bg-warm-brown-50 w-full sm:w-auto"
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50 w-full sm:w-auto"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   <span className="hidden sm:inline">Edit Kamar</span>
@@ -391,7 +391,7 @@ export const RoomDetail = memo(function RoomDetail({ roomId, open, onOpenChange 
               {/* Room Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Card className="border-0 bg-gradient-to-br from-blue-50 to-blue-100/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-6 text-center">
+                  <CardContent className="bg-white p-6 text-center">
                     <div className="flex items-center justify-center mb-3">
                       <div className={`p-3 rounded-full ${
                         room.is_active ? 'bg-green-500' : 'bg-red-500'
@@ -408,7 +408,7 @@ export const RoomDetail = memo(function RoomDetail({ roomId, open, onOpenChange 
                   </CardContent>
                 </Card>
                 <Card className="border-0 bg-gradient-to-br from-purple-50 to-purple-100/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-6 text-center">
+                  <CardContent className="bg-white p-6 text-center">
                     <div className="flex items-center justify-center mb-3">
                       <div className={`p-3 rounded-full ${
                         room.is_smoking_allowed ? 'bg-orange-500' : 'bg-green-500'
@@ -429,7 +429,7 @@ export const RoomDetail = memo(function RoomDetail({ roomId, open, onOpenChange 
                   </CardContent>
                 </Card>
                 <Card className="border-0 bg-gradient-to-br from-amber-50 to-orange-100/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-6 text-center">
+                  <CardContent className="bg-white p-6 text-center">
                     <div className="flex items-center justify-center mb-3">
                       <div className="p-3 bg-amber-500 rounded-full">
                         <Calendar className="w-6 h-6 text-white" />

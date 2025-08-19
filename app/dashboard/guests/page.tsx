@@ -132,7 +132,7 @@ export default function GuestsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white ">
       <div className={cn(
         "mx-auto space-y-6 transition-all duration-300",
         // Responsive container width based on sidebar state
@@ -141,17 +141,17 @@ export default function GuestsPage() {
           : "max-w-7xl" // Standard width when sidebar is expanded
       )}>
         {/* Header */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-warm-brown-50 via-warm-brown-100 to-amber-50 p-8 border border-warm-brown-200/50">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-warm-brown-100/20 via-transparent to-transparent" />
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 via-blue-100 to-amber-50 p-8 border border-blue-200/50">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100/20 via-transparent to-transparent" />
           <div className="relative flex items-center justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-br from-warm-brown-600 to-warm-brown-700 rounded-xl shadow-lg">
+                <div className="p-3 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg">
                   <Users className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <h2 className="text-3xl font-bold text-gray-900">Manajemen Tamu</h2>
-                  <p className="text-warm-brown-700">
+                  <p className="text-blue-700">
                     Kelola data tamu dan riwayat menginap dengan mudah
                   </p>
                 </div>
@@ -160,13 +160,13 @@ export default function GuestsPage() {
             <div className="flex items-center gap-3">
               <Button 
                 variant="outline" 
-                className="border-warm-brown-200 text-warm-brown-700 hover:bg-warm-brown-50"
+                className="border-green-200 text-green-700 hover:bg-green-50"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Export
               </Button>
-              <Button 
-                className="bg-gradient-to-r from-warm-brown-600 to-warm-brown-700 hover:from-warm-brown-700 hover:to-warm-brown-800 shadow-lg"
+              <Button      
+                className="bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 shadow-lg"
                 onClick={() => setShowCreateForm(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />

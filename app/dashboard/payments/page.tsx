@@ -185,7 +185,7 @@ export default function PaymentsPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-warm-brown-600" />
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-blue-600" />
               <p className="text-gray-600">Memuat data pembayaran...</p>
             </div>
           </div>
@@ -195,7 +195,7 @@ export default function PaymentsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="bg-white p-6">
       <div className={cn(
         "mx-auto space-y-6 transition-all duration-300",
         // Responsive container width based on sidebar state
@@ -217,7 +217,7 @@ export default function PaymentsPage() {
               Ekspor
             </Button>
             <Button 
-              className="bg-warm-brown-600 hover:bg-warm-brown-700"
+              className="bg-blue-400 hover:bg-blue-600"
               onClick={() => setShowCreateForm(true)}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -228,7 +228,7 @@ export default function PaymentsPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -240,7 +240,7 @@ export default function PaymentsPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -256,7 +256,7 @@ export default function PaymentsPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -272,7 +272,7 @@ export default function PaymentsPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className='border-0 shadow-lg'>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -294,7 +294,7 @@ export default function PaymentsPage() {
         </div>
 
         {/* Filters and Search */}
-        <Card>
+        <Card className='border-0 shadow-lg'>
           <CardContent className="p-4">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="flex-1">
@@ -354,7 +354,7 @@ export default function PaymentsPage() {
         </Card>
 
         {/* Payments Table */}
-        <Card>
+        <Card className='border-0 shadow-lg'>
           <CardHeader>
             <CardTitle>Daftar Pembayaran</CardTitle>
             <CardDescription>
