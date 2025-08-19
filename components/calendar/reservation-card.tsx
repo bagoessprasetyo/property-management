@@ -116,7 +116,7 @@ export const ReservationCard = memo(function ReservationCard({
         >
         <CardContent className="p-3">
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col items-start space-y-2 justify-between">
               <Badge className={`${statusConfig.color} text-xs transition-all duration-200 group-hover:scale-105`}>
                 <StatusIcon className="w-3 h-3 mr-1" />
                 {statusConfig.label}

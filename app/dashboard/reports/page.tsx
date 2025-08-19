@@ -36,10 +36,13 @@ import {
   LineChart,
   DollarSign
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { useSidebar } from '@/lib/context/sidebar-context'
 
 export default function ReportsPage() {
   // Removed currentProperty for single property setup
   const { data: reports, isLoading } = useReports()
+  const { isCollapsed } = useSidebar()
   const { data: occupancyData, isLoading: occupancyLoading } = useOccupancyReport()
   const { data: revenueData, isLoading: revenueLoading } = useRevenueReport()
   const { data: paymentData, isLoading: paymentLoading } = usePaymentStats()
@@ -80,7 +83,13 @@ export default function ReportsPage() {
 
   return (
     <div className="p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className={cn(
+        "mx-auto space-y-6 transition-all duration-300",
+        // Responsive container width based on sidebar state
+        isCollapsed 
+          ? "max-w-[calc(100vw-6rem)] xl:max-w-[1400px]" // Wider when sidebar is collapsed
+          : "max-w-7xl" // Standard width when sidebar is expanded
+      )}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

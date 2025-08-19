@@ -81,9 +81,12 @@ import {
   exportRoomsAsExcel, 
   exportRoomAnalyticsReport 
 } from '@/lib/utils/room-export'
+import { useSidebar } from '@/lib/context/sidebar-context'
+import { cn } from '@/lib/utils'
 
 export default function RoomsPage() {
   const { currentProperty } = useProperty()
+  const { isCollapsed } = useSidebar()
   const { data: allRooms, isLoading } = useRooms()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -287,7 +290,13 @@ export default function RoomsPage() {
 
   return (
     <div className="p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className={cn(
+        "mx-auto space-y-6 transition-all duration-300",
+        // Responsive container width based on sidebar state
+        isCollapsed 
+          ? "max-w-[calc(100vw-6rem)] xl:max-w-[1400px]" // Wider when sidebar is collapsed
+          : "max-w-7xl" // Standard width when sidebar is expanded
+      )}>
         {/* Header */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-warm-brown-50 via-warm-brown-100 to-amber-50 p-8 border border-warm-brown-200/50">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-warm-brown-100/20 via-transparent to-transparent" />

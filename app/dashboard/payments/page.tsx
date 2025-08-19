@@ -45,9 +45,12 @@ import {
 } from 'lucide-react'
 import { PaymentForm } from '@/components/payments/payment-form'
 import { PaymentDetail } from '@/components/payments/payment-detail'
+import { cn } from '@/lib/utils'
+import { useSidebar } from '@/lib/context/sidebar-context'
 
 export default function PaymentsPage() {
   const { currentProperty } = useProperty()
+  const { isCollapsed } = useSidebar()
   const { data: payments, isLoading } = usePayments(currentProperty?.id)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -193,7 +196,13 @@ export default function PaymentsPage() {
 
   return (
     <div className="p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className={cn(
+        "mx-auto space-y-6 transition-all duration-300",
+        // Responsive container width based on sidebar state
+        isCollapsed 
+          ? "max-w-[calc(100vw-6rem)] xl:max-w-[1400px]" // Wider when sidebar is collapsed
+          : "max-w-7xl" // Standard width when sidebar is expanded
+      )}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

@@ -333,11 +333,11 @@ export function ReservationGrid({
                                         {formatDateShort(new Date(reservation.check_in_date))} - 
                                         {formatDateShort(new Date(reservation.check_out_date))}
                                       </div>
-                                      {reservation.total_amount && (
+                                      {/* {reservation.total_amount && (
                                         <div className="text-green-600 font-medium">
                                           {formatIDR(reservation.total_amount)}
                                         </div>
-                                      )}
+                                      )} */}
                                     </div>
                                   </div>
                                 </CardContent>

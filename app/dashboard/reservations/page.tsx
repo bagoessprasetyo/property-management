@@ -45,10 +45,13 @@ import {
   Grid3X3,
   List
 } from 'lucide-react'
+import { useSidebar } from '@/lib/context/sidebar-context'
+import { cn } from '@/lib/utils'
 
 export default function ReservationsPage() {
   // Removed currentProperty for single property setup
   const { data: reservations, isLoading } = useReservations()
+  const { isCollapsed } = useSidebar()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState('all')
@@ -169,7 +172,13 @@ export default function ReservationsPage() {
 
   return (
     <div className="p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className={cn(
+        "mx-auto space-y-6 transition-all duration-300",
+        // Responsive container width based on sidebar state
+        isCollapsed 
+          ? "max-w-[calc(100vw-6rem)] xl:max-w-[1400px]" // Wider when sidebar is collapsed
+          : "max-w-7xl" // Standard width when sidebar is expanded
+      )}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

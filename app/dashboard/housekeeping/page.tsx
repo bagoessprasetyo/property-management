@@ -66,9 +66,12 @@ import { TaskDetail } from '@/components/housekeeping/task-detail'
 import { DailySchedule } from '@/components/housekeeping/daily-schedule'
 import { HousekeepingAnalytics } from '@/components/housekeeping/housekeeping-analytics'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
+import { useSidebar } from '@/lib/context/sidebar-context'
 
 export default function HousekeepingPage() {
   const { currentProperty } = useProperty()
+  const { isCollapsed } = useSidebar()
   const { data: tasks, isLoading } = useHousekeepingTasks()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -212,7 +215,13 @@ export default function HousekeepingPage() {
 
   return (
     <div className="p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className={cn(
+        "mx-auto space-y-6 transition-all duration-300",
+        // Responsive container width based on sidebar state
+        isCollapsed 
+          ? "max-w-[calc(100vw-6rem)] xl:max-w-[1400px]" // Wider when sidebar is collapsed
+          : "max-w-7xl" // Standard width when sidebar is expanded
+      )}>
         {/* Modern Header */}
         <div className="border-b border-gray-200 pb-6">
           <div className="flex items-center justify-between">

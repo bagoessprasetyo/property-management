@@ -39,11 +39,13 @@ import {
   Upload,
   Camera
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { useSidebar } from '@/lib/context/sidebar-context'
 
 export default function SettingsPage() {
   const { currentProperty } = useProperty()
   const [activeTab, setActiveTab] = useState('property')
-
+  const { isCollapsed } = useSidebar()
   // Property settings state
   const [propertySettings, setPropertySettings] = useState({
     name: currentProperty?.name || '',
@@ -103,7 +105,13 @@ export default function SettingsPage() {
 
   return (
     <div className="p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className={cn(
+        "mx-auto space-y-6 transition-all duration-300",
+        // Responsive container width based on sidebar state
+        isCollapsed 
+          ? "max-w-[calc(100vw-6rem)] xl:max-w-[1400px]" // Wider when sidebar is collapsed
+          : "max-w-7xl" // Standard width when sidebar is expanded
+      )}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
