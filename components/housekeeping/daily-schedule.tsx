@@ -33,7 +33,7 @@ export function DailySchedule({ selectedDate = new Date().toISOString().split('T
   const [showTaskDetail, setShowTaskDetail] = useState(false)
   
   const { currentProperty } = useProperty()
-  const { data: tasks, isLoading } = useHousekeepingSchedule(currentProperty?.id || '', currentDate)
+  const { data: tasks, isLoading } = useHousekeepingSchedule('', currentDate)
 
   const navigateDate = (direction: 'prev' | 'next') => {
     const date = new Date(currentDate)
@@ -129,12 +129,12 @@ export function DailySchedule({ selectedDate = new Date().toISOString().split('T
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="border-0 shadow-sm">
         <CardContent className="p-8">
           <div className="flex items-center justify-center">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-warm-brown-600" />
-              <p className="text-gray-600">Memuat jadwal...</p>
+              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3 text-gray-400" />
+              <p className="text-sm text-gray-500">Memuat jadwal...</p>
             </div>
           </div>
         </CardContent>
@@ -144,15 +144,17 @@ export function DailySchedule({ selectedDate = new Date().toISOString().split('T
 
   return (
     <>
-      <Card>
-        <CardHeader>
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
+              <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+                <div className="p-1.5 bg-gray-100 rounded-md">
+                  <Calendar className="w-4 h-4 text-gray-600" />
+                </div>
                 Jadwal Harian
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 {currentDateFormatted} • {tasks?.length || 0} tugas
               </CardDescription>
             </div>
@@ -193,27 +195,27 @@ export function DailySchedule({ selectedDate = new Date().toISOString().split('T
               {groupedTasks.map((task) => (
                 <Card 
                   key={task.id} 
-                  className={`border-l-4 ${getPriorityColor(task.priority)} cursor-pointer hover:shadow-md transition-shadow`}
+                  className={`border-l-4 ${getPriorityColor(task.priority)} cursor-pointer hover:shadow-md transition-all duration-200 border-gray-200 bg-white`}
                   onClick={() => handleViewTask(task.id)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-3">
                           <div className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4 text-gray-400" />
-                            <span className="font-medium">Kamar {task.room_number}</span>
+                            <MapPin className="w-4 h-4 text-gray-500" />
+                            <span className="font-medium text-gray-900">Kamar {task.room_number}</span>
                           </div>
-                          <span className="text-sm text-gray-500">•</span>
+                          <span className="text-sm text-gray-400">•</span>
                           <span className="text-sm text-gray-600">
                             {getTaskTypeLabel(task.task_type)}
                           </span>
                           {task.scheduled_time && (
                             <>
-                              <span className="text-sm text-gray-500">•</span>
+                              <span className="text-sm text-gray-400">•</span>
                               <div className="flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-gray-400" />
-                                <span className="text-sm text-gray-600">
+                                <Clock className="w-3 h-3 text-gray-500" />
+                                <span className="text-sm text-gray-600 font-medium">
                                   {task.scheduled_time} WIB
                                 </span>
                               </div>
@@ -238,7 +240,7 @@ export function DailySchedule({ selectedDate = new Date().toISOString().split('T
                         </div>
                         
                         {task.notes && (
-                          <p className="text-sm text-gray-500 mt-2 line-clamp-1">
+                          <p className="text-sm text-gray-500 mt-3 line-clamp-2 leading-relaxed">
                             {task.notes}
                           </p>
                         )}

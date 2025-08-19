@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/types/database'
+import { toast } from 'sonner'
 
 const supabase = createClient()
 
@@ -39,10 +40,6 @@ export function useHousekeepingTasks(propertyId?: string, filters?: {
             room_number
           )
         `)
-
-      if (propertyId) {
-        query = query.eq('property_id', propertyId)
-      }
 
       if (filters?.status && filters.status !== 'all') {
         query = query.eq('status', filters.status)
@@ -122,7 +119,6 @@ export function useHousekeepingSchedule(propertyId: string, date: string) {
             room_number
           )
         `)
-        .eq('property_id', propertyId)
         .eq('scheduled_date', date)
         .order('scheduled_time', { ascending: true })
 
@@ -168,8 +164,12 @@ export function useCreateHousekeepingTask() {
       
       return transformedTask
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: housekeepingKeys.all })
+      toast.success(`Tugas housekeeping untuk kamar ${data.room_number} berhasil dibuat`)
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal membuat tugas: ${error.message || 'Terjadi kesalahan'}`)
     },
   })
 }
@@ -206,6 +206,10 @@ export function useUpdateHousekeepingTask() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: housekeepingKeys.all })
       queryClient.setQueryData(housekeepingKeys.detail(data.id), data)
+      toast.success(`Tugas untuk kamar ${data.room_number} berhasil diperbarui`)
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal memperbarui tugas: ${error.message || 'Terjadi kesalahan'}`)
     },
   })
 }
@@ -226,8 +230,22 @@ export function useUpdateTaskStatus() {
       if (error) throw error
       return data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: housekeepingKeys.all })
+      
+      const statusLabels = {
+        'pending': 'Menunggu',
+        'in_progress': 'Sedang Dikerjakan',
+        'completed': 'Selesai',
+        'inspected': 'Telah Diperiksa',
+        'failed_inspection': 'Perlu Diperbaiki'
+      }
+      
+      const statusLabel = statusLabels[data.status as keyof typeof statusLabels] || data.status
+      toast.success(`Status tugas berhasil diubah menjadi: ${statusLabel}`)
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal mengubah status: ${error.message || 'Terjadi kesalahan'}`)
     },
   })
 }

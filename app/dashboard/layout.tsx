@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/context/auth-context'
 import { useProperty } from '@/lib/context/property-context'
 import { useSidebar } from '@/lib/context/sidebar-context'
@@ -72,7 +73,11 @@ export default function DashboardLayout({
         </ErrorBoundary>
         
         {/* Main content */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <div className={cn(
+          "flex-1 flex flex-col overflow-hidden min-w-0 transition-all duration-300",
+          // Adjust margin based on sidebar state on desktop
+          "lg:ml-0" // Reset any margin, let flex handle the layout
+        )}>
           {/* Header */}
           <ErrorBoundary>
             <Header 

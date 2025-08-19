@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useCreateReservation, useUpdateReservation } from '@/lib/hooks/use-reservations'
+import { useCreateReservation, useCreateReservationWithPayment, useUpdateReservation } from '@/lib/hooks/use-reservations'
 import { useRooms } from '@/lib/hooks/use-rooms'
-import { useGuests } from '@/lib/hooks/use-guests'
-import { useProperty } from '@/lib/context/property-context'
+import { useGuests, useCreateGuest } from '@/lib/hooks/use-guests'
+// Removed property context for single property setup
 import { formatIDR, parseIDR } from '@/lib/utils/currency'
+import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -98,12 +99,22 @@ export function ReservationForm({
 }: ReservationFormProps) {
   const [totalAmountInput, setTotalAmountInput] = useState('')
   const [currentTab, setCurrentTab] = useState('guest')
+  const [showGuestForm, setShowGuestForm] = useState(false)
+  const [newGuestData, setNewGuestData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    identification_number: ''
+  })
   const isEditing = !!reservation
-  const { currentProperty } = useProperty()
+  // Removed currentProperty for single property setup
 
   const createReservation = useCreateReservation()
+  const createReservationWithPayment = useCreateReservationWithPayment()
   const updateReservation = useUpdateReservation()
-  const { data: rooms } = useRooms(currentProperty?.id)
+  const createGuest = useCreateGuest()
+  const { data: rooms } = useRooms()
   const { data: allRooms } = useRooms() // Fallback for when property rooms are empty
   const { data: guests } = useGuests()
 
@@ -163,18 +174,22 @@ export function ReservationForm({
       logger.info(`${isEditing ? 'Updating' : 'Creating'} reservation`, { 
         reservationId: reservation?.id,
         guestId: data.guest_id,
-        roomId: data.room_id
+        roomId: data.room_id,
+        paymentStatus: data.payment_status
       })
 
+      // Extract payment status and remove it from reservation data
+      const { payment_status, ...reservationData } = data
+
       const formattedData = {
-        ...data,
-        property_id: currentProperty?.id,
-        confirmation_number: data.confirmation_number || 
+        ...reservationData,
+        property_id: '00000000-0000-0000-0000-000000000000', // Default property ID for single property setup
+        confirmation_number: reservationData.confirmation_number || 
           `RES${Date.now().toString().slice(-6)}`,
-        special_requests: data.special_requests || null,
-        notes: data.notes || null,
-        check_in_time: data.check_in_time || '14:00',
-        check_out_time: data.check_out_time || '12:00',
+        special_requests: reservationData.special_requests || null,
+        notes: reservationData.notes || null,
+        check_in_time: reservationData.check_in_time || '14:00',
+        check_out_time: reservationData.check_out_time || '12:00',
       }
 
       if (isEditing) {
@@ -183,12 +198,27 @@ export function ReservationForm({
           updates: formattedData
         })
         logger.info('Reservation updated successfully', { reservationId: reservation.id })
+        toast.success('Reservasi berhasil diperbarui')
       } else {
-        await createReservation.mutateAsync({
-          ...formattedData,
-          rate_per_night: selectedRoom?.base_rate || 0
-        })
-        logger.info('Reservation created successfully')
+        // Use the appropriate hook based on payment status
+        if (payment_status && payment_status !== 'unpaid') {
+          await createReservationWithPayment.mutateAsync({
+            reservation: {
+              ...formattedData,
+              rate_per_night: selectedRoom?.base_rate || 0
+            },
+            paymentStatus: payment_status
+          })
+          logger.info('Reservation with payment created successfully', { paymentStatus: payment_status })
+          toast.success(`Reservasi berhasil dibuat${payment_status === 'paid' ? ' dengan pembayaran lunas' : payment_status === 'partial' ? ' dengan pembayaran sebagian' : ''}`)
+        } else {
+          await createReservation.mutateAsync({
+            ...formattedData,
+            rate_per_night: selectedRoom?.base_rate || 0
+          })
+          logger.info('Reservation created successfully')
+          toast.success('Reservasi berhasil dibuat')
+        }
       }
 
       onOpenChange(false)
@@ -198,6 +228,7 @@ export function ReservationForm({
       onSuccess?.()
     } catch (error) {
       logger.error(`Failed to ${isEditing ? 'update' : 'create'} reservation`, error)
+      toast.error(`Gagal ${isEditing ? 'memperbarui' : 'membuat'} reservasi: ${error instanceof Error ? error.message : 'Terjadi kesalahan'}`)
     }
   }
 
@@ -206,6 +237,41 @@ export function ReservationForm({
     form.reset()
     setTotalAmountInput('')
     setCurrentTab('guest')
+    setShowGuestForm(false)
+    setNewGuestData({
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone: '',
+      identification_number: ''
+    })
+  }
+
+  const handleCreateGuest = async () => {
+    try {
+      if (!newGuestData.first_name || !newGuestData.last_name) {
+        toast.error('Nama depan dan nama belakang harus diisi')
+        return
+      }
+
+      const newGuest = await createGuest.mutateAsync({
+        ...newGuestData
+      })
+
+      // Auto-select the newly created guest
+      form.setValue('guest_id', newGuest.id)
+      setShowGuestForm(false)
+      setNewGuestData({
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        identification_number: ''
+      })
+      toast.success('Tamu baru berhasil ditambahkan')
+    } catch (error) {
+      toast.error(`Gagal membuat tamu baru: ${error instanceof Error ? error.message : 'Terjadi kesalahan'}`)
+    }
   }
 
   const handleTotalAmountChange = (value: string) => {
@@ -216,7 +282,7 @@ export function ReservationForm({
 
   const selectedGuest = guests?.find(g => g.id === form.watch('guest_id'))
 
-  const isLoading = createReservation.isPending || updateReservation.isPending
+  const isLoading = createReservation.isPending || createReservationWithPayment.isPending || updateReservation.isPending
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -271,58 +337,188 @@ export function ReservationForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {guests?.map(guest => (
-                            <SelectItem key={guest.id} value={guest.id}>
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-warm-brown-100 rounded-full flex items-center justify-center">
-                                  <User className="w-4 h-4 text-warm-brown-600" />
-                                </div>
-                                <div>
-                                  <div className="font-medium">
-                                    {guest.first_name} {guest.last_name}
+                          {guests && guests.length > 0 ? (
+                            guests.map(guest => (
+                              <SelectItem key={guest.id} value={guest.id}>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                    <User className="w-4 h-4 text-gray-600" />
                                   </div>
-                                  <div className="text-sm text-gray-500 flex items-center gap-4">
-                                    {guest.email && (
-                                      <span className="flex items-center gap-1">
-                                        <Mail className="w-3 h-3" />
-                                        {guest.email}
-                                      </span>
-                                    )}
-                                    {guest.phone && (
-                                      <span className="flex items-center gap-1">
-                                        <Phone className="w-3 h-3" />
-                                        {guest.phone}
-                                      </span>
-                                    )}
+                                  <div>
+                                    <div className="font-medium text-gray-900">
+                                      {guest.first_name} {guest.last_name}
+                                    </div>
+                                    <div className="text-xs text-gray-500 flex items-center gap-3">
+                                      {guest.email && (
+                                        <span className="flex items-center gap-1">
+                                          <Mail className="w-3 h-3" />
+                                          {guest.email}
+                                        </span>
+                                      )}
+                                      {guest.phone && (
+                                        <span className="flex items-center gap-1">
+                                          <Phone className="w-3 h-3" />
+                                          {guest.phone}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </SelectItem>
-                          ))}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <div className="flex items-center justify-center p-4">
+                              <div className="text-sm text-gray-500">Belum ada tamu terdaftar</div>
+                            </div>
+                          )}
                         </SelectContent>
                       </Select>
-                      <FormDescription>
-                        Pilih tamu yang sudah terdaftar, atau{' '}
-                        <Button variant="link" className="p-0 h-auto text-sm">
+                      <div className="flex items-center justify-between">
+                        <FormDescription>
+                          Pilih tamu yang sudah terdaftar
+                        </FormDescription>
+                        <Button 
+                          type="button"
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setShowGuestForm(true)}
+                          className="text-xs"
+                        >
                           <Plus className="w-3 h-3 mr-1" />
-                          tambah tamu baru
+                          Tambah Tamu Baru
                         </Button>
-                      </FormDescription>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
+                {/* Guest Creation Form */}
+                {showGuestForm && (
+                  <Card className="border-blue-200 bg-blue-50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base font-medium flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <Plus className="w-4 h-4" />
+                          Tambah Tamu Baru
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowGuestForm(false)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor="first_name" className="text-sm font-medium">
+                            Nama Depan *
+                          </Label>
+                          <Input
+                            id="first_name"
+                            value={newGuestData.first_name}
+                            onChange={(e) => setNewGuestData({ ...newGuestData, first_name: e.target.value })}
+                            placeholder="Nama depan"
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="last_name" className="text-sm font-medium">
+                            Nama Belakang *
+                          </Label>
+                          <Input
+                            id="last_name"
+                            value={newGuestData.last_name}
+                            onChange={(e) => setNewGuestData({ ...newGuestData, last_name: e.target.value })}
+                            placeholder="Nama belakang"
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor="email" className="text-sm font-medium">
+                            Email
+                          </Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={newGuestData.email}
+                            onChange={(e) => setNewGuestData({ ...newGuestData, email: e.target.value })}
+                            placeholder="email@example.com"
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="phone" className="text-sm font-medium">
+                            Nomor Telepon
+                          </Label>
+                          <Input
+                            id="phone"
+                            value={newGuestData.phone}
+                            onChange={(e) => setNewGuestData({ ...newGuestData, phone: e.target.value })}
+                            placeholder="08xx-xxxx-xxxx"
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="identification_number" className="text-sm font-medium">
+                          Nomor KTP
+                        </Label>
+                        <Input
+                          id="identification_number"
+                          value={newGuestData.identification_number}
+                          onChange={(e) => setNewGuestData({ ...newGuestData, identification_number: e.target.value })}
+                          placeholder="Nomor KTP"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          type="button"
+                          onClick={handleCreateGuest}
+                          disabled={createGuest.isPending || !newGuestData.first_name || !newGuestData.last_name}
+                          className="flex-1"
+                        >
+                          {createGuest.isPending ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                              Menyimpan...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-4 h-4 mr-2" />
+                              Simpan Tamu
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowGuestForm(false)}
+                        >
+                          Batal
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Selected Guest Info */}
-                {selectedGuest && (
-                  <Card className="bg-blue-50 border-blue-200">
+                {selectedGuest && !showGuestForm && (
+                  <Card className="bg-gray-50 border-gray-200">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <User className="w-6 h-6 text-blue-600" />
+                        <div className="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center">
+                          <User className="w-5 h-5 text-gray-600" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-medium">
+                          <h3 className="font-medium text-gray-900">
                             {selectedGuest.first_name} {selectedGuest.last_name}
                           </h3>
                           <div className="text-sm text-gray-600 space-y-1">
@@ -338,15 +534,15 @@ export function ReservationForm({
                                 {selectedGuest.phone}
                               </div>
                             )}
-                            {selectedGuest.id_number && (
+                            {selectedGuest.identification_number && (
                               <div className="text-xs text-gray-500">
-                                KTP: {selectedGuest.id_number}
+                                KTP: {selectedGuest.identification_number}
                               </div>
                             )}
                           </div>
                         </div>
                         {selectedGuest.vip_status && (
-                          <Badge className="bg-gold-100 text-gold-800">
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-200">
                             VIP
                           </Badge>
                         )}

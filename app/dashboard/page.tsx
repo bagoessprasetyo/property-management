@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { cn } from '@/lib/utils'
+import { useSidebar } from '@/lib/context/sidebar-context'
 import { formatIDR } from '@/lib/utils/currency'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useProperty } from '@/lib/context/property-context'
+// Removed property context for single property setup
 import { useDashboardStats, useRecentActivities, useUpcomingActivities } from '@/lib/hooks/use-dashboard'
 import { ReservationForm } from '@/components/reservations/reservation-form'
 import { 
@@ -40,14 +42,15 @@ import {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { currentProperty } = useProperty()
+  const { isCollapsed } = useSidebar()
+  // Removed currentProperty for single property setup
   const [lastRefresh, setLastRefresh] = useState(new Date())
   const [currentTime, setCurrentTime] = useState(new Date())
   const [showBookingForm, setShowBookingForm] = useState(false)
   
-  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useDashboardStats(currentProperty?.id)
-  const { data: activities, isLoading: activitiesLoading } = useRecentActivities(currentProperty?.id, 8)
-  const { data: upcoming, isLoading: upcomingLoading } = useUpcomingActivities(currentProperty?.id)
+  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useDashboardStats()
+  const { data: activities, isLoading: activitiesLoading } = useRecentActivities(8)
+  const { data: upcoming, isLoading: upcomingLoading } = useUpcomingActivities()
 
   const isLoading = statsLoading || activitiesLoading || upcomingLoading
 
@@ -147,14 +150,20 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className={cn(
+        "mx-auto space-y-6 transition-all duration-300",
+        // Responsive container width based on sidebar state
+        isCollapsed 
+          ? "max-w-[calc(100vw-6rem)] xl:max-w-[1400px]" // Wider when sidebar is collapsed
+          : "max-w-7xl" // Standard width when sidebar is expanded
+      )}>
         {/* Header with real-time info */}
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Dashboard</h2>
             <div className="flex items-center gap-4 mt-1">
               <p className="text-gray-600">
-                {currentProperty?.name || 'Semua Properti'} • {currentTime.toLocaleDateString('id-ID', { 
+                InnSync Hotel • {currentTime.toLocaleDateString('id-ID', { 
                   weekday: 'long', 
                   year: 'numeric', 
                   month: 'long', 

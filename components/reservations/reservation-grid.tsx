@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-import { useProperty } from '@/lib/context/property-context'
+// Removed property context for single property setup
 import { useReservations, useUpdateReservation } from '@/lib/hooks/use-reservations'
 import { useRooms } from '@/lib/hooks/use-rooms'
 import { formatDateShort } from '@/lib/utils/date'
@@ -30,9 +30,9 @@ export function ReservationGrid({
   startDate = new Date(), 
   endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
 }: ReservationGridProps) {
-  const { currentProperty } = useProperty()
-  const { data: reservations } = useReservations(currentProperty?.id)
-  const { data: rooms, error: roomsError, isLoading: roomsLoading } = useRooms(currentProperty?.id)
+  // Removed currentProperty for single property setup
+  const { data: reservations } = useReservations()
+  const { data: rooms, error: roomsError, isLoading: roomsLoading } = useRooms()
   // Load ALL rooms as fallback when property rooms are empty
   const { data: allRooms } = useRooms()
   const updateReservation = useUpdateReservation()

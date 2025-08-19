@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { useProperty } from '@/lib/context/property-context'
+// Removed property context for single property setup
 import { useAuth } from '@/lib/context/auth-context'
 import { useSidebar } from '@/lib/context/sidebar-context'
 import { Button } from '@/components/ui/button'
@@ -90,7 +90,7 @@ const navigation = [
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
-  const { currentProperty } = useProperty()
+  // Removed currentProperty for single property setup
   const { user, signOut } = useAuth()
   const { isOpen, isCollapsed, setIsOpen, toggleCollapsed } = useSidebar()
 
@@ -103,7 +103,7 @@ export function Sidebar({ className }: SidebarProps) {
           {(!isCollapsed || mobile) && (
             <div>
               <h1 className="text-xl font-bold text-gray-900">InnSync</h1>
-              <p className="text-xs text-gray-500">{currentProperty?.name || 'Loading...'}</p>
+              <p className="text-xs text-gray-500">Property Management</p>
             </div>
           )}
         </div>

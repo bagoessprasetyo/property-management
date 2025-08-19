@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo, memo, useCallback } from 'react'
 import { Resolver, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useProperty } from '@/lib/context/property-context'
+// Removed property context for single property setup
 import { useCreateRoom, useUpdateRoom } from '@/lib/hooks/use-rooms'
 import { formatIDR, parseIDR } from '@/lib/utils/currency'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
+import { Progress } from '@/components/ui/progress'
 import { 
   Bed, 
   DollarSign, 
@@ -33,7 +34,14 @@ import {
   Tv,
   Phone,
   Refrigerator,
-  Settings
+  Settings,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Home,
+  Sparkles,
+  Shield,
+  AlertCircle
 } from 'lucide-react'
 import { logger } from '@/lib/utils/logger'
 
@@ -82,10 +90,12 @@ interface RoomFormProps {
   onSuccess?: () => void
 }
 
-export function RoomForm({ room, open, onOpenChange, onSuccess }: RoomFormProps) {
+export const RoomForm = memo(function RoomForm({ room, open, onOpenChange, onSuccess }: RoomFormProps) {
   const [currentTab, setCurrentTab] = useState('basic')
+  const [formProgress, setFormProgress] = useState(0)
+  const [savedData, setSavedData] = useState<Partial<RoomFormData>>({})
   const isEditing = !!room
-  const { currentProperty } = useProperty()
+  // Removed currentProperty for single property setup
 
   const createRoom = useCreateRoom()
   const updateRoom = useUpdateRoom()
@@ -110,6 +120,78 @@ export function RoomForm({ room, open, onOpenChange, onSuccess }: RoomFormProps)
     },
   })
 
+  // Watch form values for progress calculation
+  const watchedValues = form.watch()
+
+  // Calculate form completion progress
+  const progress = useMemo(() => {
+    const requiredFields = ['room_number', 'room_type', 'capacity', 'base_rate']
+    const optionalFields = ['floor', 'size_sqm', 'bed_type', 'description', 'max_extra_beds', 'cleaning_fee', 'notes']
+    
+    const completedRequired = requiredFields.filter(field => {
+      const value = watchedValues[field as keyof RoomFormData]
+      return value !== null && value !== undefined && value !== '' && value !== 0
+    }).length
+    
+    const completedOptional = optionalFields.filter(field => {
+      const value = watchedValues[field as keyof RoomFormData]
+      return value !== null && value !== undefined && value !== ''
+    }).length
+    
+    const amenitiesCount = (watchedValues.amenities?.length || 0) > 0 ? 1 : 0
+    
+    // Required fields count as 60%, optional as 30%, amenities as 10%
+    const requiredPercentage = (completedRequired / requiredFields.length) * 60
+    const optionalPercentage = (completedOptional / optionalFields.length) * 30
+    const amenitiesPercentage = amenitiesCount * 10
+    
+    return Math.round(requiredPercentage + optionalPercentage + amenitiesPercentage)
+  }, [watchedValues])
+
+  // Auto-save functionality
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (progress > 0 && !isEditing) {
+        setSavedData(watchedValues)
+        localStorage.setItem('room_form_draft', JSON.stringify(watchedValues))
+      }
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [watchedValues, progress, isEditing])
+
+  // Load saved draft on mount
+  useEffect(() => {
+    if (!room && open) {
+      const savedDraft = localStorage.getItem('room_form_draft')
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft)
+          Object.keys(parsed).forEach(key => {
+            if (parsed[key] !== null && parsed[key] !== undefined && parsed[key] !== '') {
+              form.setValue(key as keyof RoomFormData, parsed[key])
+            }
+          })
+        } catch (error) {
+          console.error('Failed to load saved draft:', error)
+        }
+      }
+    }
+  }, [room, open, form])
+
+  // Tab completion status
+  const tabStatus = useMemo(() => {
+    const basic = form.getValues(['room_number', 'room_type', 'capacity', 'base_rate'])
+    const amenities = (form.getValues('amenities')?.length || 0) > 0
+    const settings = true // Always considered complete as all fields are optional
+    
+    return {
+      basic: basic.every(val => val !== null && val !== undefined && val !== '' && val !== 0),
+      amenities,
+      settings
+    }
+  }, [watchedValues])
+
   const [baseRateInput, setBaseRateInput] = useState(
     room?.base_rate ? formatIDR(room.base_rate) : ''
   )
@@ -117,21 +199,18 @@ export function RoomForm({ room, open, onOpenChange, onSuccess }: RoomFormProps)
     room?.cleaning_fee ? formatIDR(room.cleaning_fee) : ''
   )
 
-  const onSubmit = async (data: RoomFormData) => {
+  const onSubmit = useCallback(async (data: RoomFormData) => {
     try {
-      if (!currentProperty?.id) {
-        throw new Error('No property selected')
-      }
+      // Removed property validation for single property setup
 
       logger.info(`${isEditing ? 'Updating' : 'Creating'} room`, { 
         roomId: room?.id,
-        roomNumber: data.room_number,
-        propertyId: currentProperty.id
+        roomNumber: data.room_number
       })
 
       const formattedData = {
         ...data,
-        property_id: currentProperty.id,
+        property_id: '00000000-0000-0000-0000-000000000000', // Default property ID for single property setup
         status: 'clean' as const, // Default status for new rooms
         // Convert null values appropriately
         floor: data.floor || null,
@@ -160,14 +239,47 @@ export function RoomForm({ room, open, onOpenChange, onSuccess }: RoomFormProps)
     } catch (error) {
       logger.error(`Failed to ${isEditing ? 'update' : 'create'} room`, error)
     }
-  }
+  }, [isEditing, room, createRoom, updateRoom, onOpenChange, form, onSuccess])
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
+    // Clear saved draft when closing
+    if (!isEditing) {
+      localStorage.removeItem('room_form_draft')
+    }
     onOpenChange(false)
     form.reset()
     setCurrentTab('basic')
     setBaseRateInput('')
     setCleaningFeeInput('')
+    setFormProgress(0)
+  }, [isEditing, onOpenChange, form])
+
+  const navigateToTab = useCallback((direction: 'next' | 'prev') => {
+    const tabs = ['basic', 'amenities', 'settings']
+    const currentIndex = tabs.indexOf(currentTab)
+    
+    if (direction === 'next' && currentIndex < tabs.length - 1) {
+      setCurrentTab(tabs[currentIndex + 1])
+    } else if (direction === 'prev' && currentIndex > 0) {
+      setCurrentTab(tabs[currentIndex - 1])
+    }
+  }, [currentTab])
+
+  const TabIcon = ({ tabName, completed }: { tabName: string; completed: boolean }) => {
+    const icons = {
+      basic: Home,
+      amenities: Sparkles,
+      settings: Settings
+    }
+    const Icon = icons[tabName as keyof typeof icons] || Home
+    
+    return (
+      <div className={`flex items-center justify-center w-6 h-6 rounded-full mr-2 transition-colors ${
+        completed ? 'bg-green-500 text-white' : currentTab === tabName ? 'bg-warm-brown-600 text-white' : 'bg-gray-200 text-gray-500'
+      }`}>
+        {completed ? <Check className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
+      </div>
+    )
   }
 
   const handleBaseRateChange = (value: string) => {
@@ -195,40 +307,108 @@ export function RoomForm({ room, open, onOpenChange, onSuccess }: RoomFormProps)
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Bed className="w-5 h-5" />
-            {isEditing ? 'Edit Kamar' : 'Tambah Kamar Baru'}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing 
-              ? 'Perbarui informasi kamar yang sudah ada'
-              : 'Buat kamar baru dengan konfigurasi lengkap'
-            }
-          </DialogDescription>
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden">
+        <DialogHeader className="relative overflow-hidden rounded-t-lg bg-gradient-to-r from-warm-brown-50 to-amber-50 p-6 -m-6 mb-6 border-b border-warm-brown-200">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-warm-brown-100/20 via-transparent to-transparent" />
+          <div className="relative">
+            <DialogTitle className="flex items-center gap-3 text-2xl">
+              <div className="p-3 bg-gradient-to-br from-warm-brown-600 to-warm-brown-700 rounded-xl shadow-lg">
+                <Bed className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <span>{isEditing ? 'Edit Kamar' : 'Tambah Kamar Baru'}</span>
+                {!isEditing && progress > 0 && (
+                  <Badge className="ml-3 bg-green-100 text-green-800">
+                    Draft tersimpan
+                  </Badge>
+                )}
+              </div>
+            </DialogTitle>
+            <DialogDescription className="mt-3 text-warm-brown-700">
+              {isEditing 
+                ? 'Perbarui informasi kamar yang sudah ada'
+                : 'Konfigurasikan kamar baru dengan fasilitas dan pengaturan lengkap'
+              }
+            </DialogDescription>
+            
+            {/* Progress Bar */}
+            {!isEditing && (
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-warm-brown-600 font-medium">Progress Konfigurasi</span>
+                  <span className="text-warm-brown-600">{progress}%</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
+            )}
+          </div>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="basic">Informasi Dasar</TabsTrigger>
-                <TabsTrigger value="amenities">Fasilitas</TabsTrigger>
-                <TabsTrigger value="settings">Pengaturan</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 h-auto p-2 bg-gray-50">
+                <TabsTrigger 
+                  value="basic" 
+                  className="flex items-center py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                >
+                  <TabIcon tabName="basic" completed={tabStatus.basic} />
+                  <div className="text-left">
+                    <div className="font-medium">Informasi Dasar</div>
+                    <div className="text-xs text-gray-500">Kamar & tarif</div>
+                  </div>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="amenities" 
+                  className="flex items-center py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                >
+                  <TabIcon tabName="amenities" completed={tabStatus.amenities} />
+                  <div className="text-left">
+                    <div className="font-medium">Fasilitas</div>
+                    <div className="text-xs text-gray-500">Amenitas & layanan</div>
+                  </div>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="settings" 
+                  className="flex items-center py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                >
+                  <TabIcon tabName="settings" completed={tabStatus.settings} />
+                  <div className="text-left">
+                    <div className="font-medium">Pengaturan</div>
+                    <div className="text-xs text-gray-500">Status & catatan</div>
+                  </div>
+                </TabsTrigger>
               </TabsList>
 
               {/* Basic Information Tab */}
-              <TabsContent value="basic" className="space-y-4 max-h-96 overflow-y-auto">
-                <div className="grid grid-cols-2 gap-4">
+              <TabsContent value="basic" className="space-y-6 max-h-96 overflow-y-auto">
+                {/* Header */}
+                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Home className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Informasi Dasar</h3>
+                    <p className="text-sm text-gray-600">Konfigurasi dasar kamar dan tarif</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="room_number"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nomor Kamar *</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel className="flex items-center gap-2 font-medium text-gray-700">
+                          <Bed className="w-4 h-4" />
+                          Nomor Kamar *
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="101, A1, Suite-01" {...field} />
+                          <Input 
+                            placeholder="101, A1, Suite-01"
+                            className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -239,17 +419,25 @@ export function RoomForm({ room, open, onOpenChange, onSuccess }: RoomFormProps)
                     control={form.control}
                     name="room_type"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tipe Kamar *</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel className="flex items-center gap-2 font-medium text-gray-700">
+                          <Building className="w-4 h-4" />
+                          Tipe Kamar *
+                        </FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-11 bg-gray-50 border-gray-200 focus:bg-white">
                               <SelectValue placeholder="Pilih tipe kamar" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {ROOM_TYPES.map(type => (
-                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                              <SelectItem key={type} value={type}>
+                                <div className="flex items-center gap-2">
+                                  <Bed className="w-4 h-4 text-warm-brown-600" />
+                                  <span>{type}</span>
+                                </div>
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -379,11 +567,29 @@ export function RoomForm({ room, open, onOpenChange, onSuccess }: RoomFormProps)
               </TabsContent>
 
               {/* Amenities Tab */}
-              <TabsContent value="amenities" className="space-y-4 max-h-96 overflow-y-auto">
-                <div className="space-y-4">
+              <TabsContent value="amenities" className="space-y-6 max-h-96 overflow-y-auto">
+                {/* Header */}
+                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Sparkles className="w-5 h-5 text-purple-600" />
+                  </div>
                   <div>
-                    <h4 className="font-medium mb-3">Fasilitas Kamar</h4>
-                    <div className="grid grid-cols-2 gap-3">
+                    <h3 className="font-semibold text-gray-900">Fasilitas Kamar</h3>
+                    <p className="text-sm text-gray-600">Pilih amenitas yang tersedia di kamar</p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Amenities Selection */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-medium text-gray-800">Fasilitas Tersedia</h4>
+                      <Badge variant="outline" className="text-xs">
+                        {form.watch('amenities').length} dipilih
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
                       {ROOM_AMENITIES.map((amenity) => {
                         const Icon = amenity.icon
                         const isSelected = form.watch('amenities').includes(amenity.id)
@@ -391,27 +597,33 @@ export function RoomForm({ room, open, onOpenChange, onSuccess }: RoomFormProps)
                         return (
                           <Card 
                             key={amenity.id}
-                            className={`cursor-pointer transition-colors ${
+                            className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
                               isSelected 
-                                ? 'border-warm-brown-600 bg-warm-brown-50' 
-                                : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-warm-brown-500 bg-gradient-to-br from-warm-brown-50 to-warm-brown-100 shadow-md' 
+                                : 'border-gray-200 hover:border-warm-brown-300 hover:bg-gray-50'
                             }`}
                             onClick={() => toggleAmenity(amenity.id)}
                           >
-                            <CardContent className="p-3">
+                            <CardContent className="p-4">
                               <div className="flex items-center gap-3">
-                                <Icon className={`w-5 h-5 ${
-                                  isSelected ? 'text-warm-brown-600' : 'text-gray-400'
-                                }`} />
-                                <span className={`text-sm ${
-                                  isSelected ? 'text-warm-brown-900 font-medium' : 'text-gray-700'
+                                <div className={`p-2 rounded-lg transition-colors ${
+                                  isSelected 
+                                    ? 'bg-warm-brown-600 text-white' 
+                                    : 'bg-gray-100 text-gray-400'
                                 }`}>
-                                  {amenity.label}
-                                </span>
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1">
+                                  <span className={`text-sm font-medium ${
+                                    isSelected ? 'text-warm-brown-900' : 'text-gray-700'
+                                  }`}>
+                                    {amenity.label}
+                                  </span>
+                                </div>
                                 {isSelected && (
-                                  <Badge className="ml-auto bg-warm-brown-600">
-                                    ✓
-                                  </Badge>
+                                  <div className="p-1 bg-green-500 rounded-full">
+                                    <Check className="w-3 h-3 text-white" />
+                                  </div>
                                 )}
                               </div>
                             </CardContent>
@@ -528,28 +740,62 @@ export function RoomForm({ room, open, onOpenChange, onSuccess }: RoomFormProps)
               </TabsContent>
             </Tabs>
 
-            <DialogFooter className="gap-2">
-              <Button type="button" variant="outline" onClick={handleClose}>
-                <X className="w-4 h-4 mr-2" />
-                Batal
-              </Button>
-              <Button type="submit" disabled={isLoading} className="bg-warm-brown-600 hover:bg-warm-brown-700">
-                {isLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    {isEditing ? 'Menyimpan...' : 'Membuat...'}
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    {isEditing ? 'Simpan Perubahan' : 'Buat Kamar'}
-                  </>
-                )}
-              </Button>
+            <DialogFooter className="gap-3 pt-6 border-t border-gray-200">
+              {/* Navigation Buttons */}
+              <div className="flex justify-between w-full">
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => navigateToTab('prev')}
+                    disabled={currentTab === 'basic'}
+                    className="min-w-24"
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Sebelumnya
+                  </Button>
+                  
+                  {currentTab !== 'settings' && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => navigateToTab('next')}
+                      className="min-w-24"
+                    >
+                      Selanjutnya
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  )}
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={handleClose}>
+                    <X className="w-4 h-4 mr-2" />
+                    Batal
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading || !tabStatus.basic} 
+                    className="bg-gradient-to-r from-warm-brown-600 to-warm-brown-700 hover:from-warm-brown-700 hover:to-warm-brown-800 shadow-lg min-w-32"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        {isEditing ? 'Menyimpan...' : 'Membuat...'}
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        {isEditing ? 'Simpan Perubahan' : 'Buat Kamar'}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
   )
-}
+})

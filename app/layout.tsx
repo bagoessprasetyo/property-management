@@ -5,6 +5,7 @@ import { AuthProvider } from "@/lib/context/auth-context";
 import { PropertyProvider } from "@/lib/context/property-context";
 import { SidebarProvider } from "@/lib/context/sidebar-context";
 import { QueryProvider } from "@/lib/providers/query-provider";
+import { Toaster } from "sonner";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -44,6 +45,7 @@ export default function RootLayout({
             <PropertyProvider>
               <SidebarProvider>
                 {children}
+                <Toaster richColors position="top-right" />
               </SidebarProvider>
             </PropertyProvider>
           </AuthProvider>

@@ -153,8 +153,8 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
         <DialogContent className="max-w-4xl">
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-warm-brown-600" />
-              <p className="text-gray-600">Memuat detail tugas...</p>
+              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3 text-gray-400" />
+              <p className="text-sm text-gray-500">Memuat detail tugas...</p>
             </div>
           </div>
         </DialogContent>
@@ -168,17 +168,17 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
-          <DialogHeader>
+          <DialogHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-warm-brown-100 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-warm-brown-600" />
+                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-gray-600" />
                 </div>
                 <div>
-                  <DialogTitle className="text-xl">
+                  <DialogTitle className="text-lg font-semibold">
                     {getTaskTypeLabel(task.task_type)} - Kamar {task.room_number}
                   </DialogTitle>
-                  <DialogDescription className="flex items-center gap-2">
+                  <DialogDescription className="flex items-center gap-2 mt-1">
                     {getStatusBadge(task.status)}
                     {getPriorityBadge(task.priority)}
                   </DialogDescription>
@@ -253,10 +253,10 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
             <TabsContent value="details" className="space-y-6 max-h-96 overflow-y-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Task Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5" />
+                <Card className="border-gray-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base font-medium">
+                      <Sparkles className="w-4 h-4 text-gray-600" />
                       Informasi Tugas
                     </CardTitle>
                   </CardHeader>
@@ -308,10 +308,10 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
                 </Card>
 
                 {/* Assignment Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="w-5 h-5" />
+                <Card className="border-gray-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base font-medium">
+                      <User className="w-4 h-4 text-gray-600" />
                       Informasi Penugasan
                     </CardTitle>
                   </CardHeader>
@@ -387,15 +387,15 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
 
               {/* Notes */}
               {task.notes && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="w-5 h-5" />
+                <Card className="border-gray-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base font-medium">
+                      <FileText className="w-4 h-4 text-gray-600" />
                       Catatan Tugas
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-700">{task.notes}</p>
+                    <p className="text-gray-700 leading-relaxed">{task.notes}</p>
                   </CardContent>
                 </Card>
               )}
@@ -403,18 +403,18 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
 
             {/* Checklist Tab */}
             <TabsContent value="checklist" className="space-y-4 max-h-96 overflow-y-auto">
-              <Card>
-                <CardHeader>
+              <Card className="border-gray-200">
+                <CardHeader className="pb-3">
                   <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CheckSquare className="w-5 h-5" />
+                    <div className="flex items-center gap-2 text-base font-medium">
+                      <CheckSquare className="w-4 h-4 text-gray-600" />
                       Checklist Tugas
                     </div>
                     <div className="text-sm text-gray-600">
                       {task.checklist?.filter((item: { completed: any }) => item.completed).length || 0} / {task.checklist?.length || 0} selesai
                     </div>
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-sm">
                     Progress penyelesaian tugas
                   </CardDescription>
                 </CardHeader>
@@ -430,13 +430,13 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
                   {task.checklist && task.checklist.length > 0 ? (
                     <div className="space-y-3">
                       {task.checklist.map((item: any, index: number) => (
-                        <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                        <div key={index} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
                           <Checkbox 
                             checked={item.completed} 
                             disabled 
                             className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                           />
-                          <span className={`flex-1 ${item.completed ? 'line-through text-gray-500' : ''}`}>
+                          <span className={`flex-1 ${item.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                             {item.item}
                           </span>
                           {item.completed && (
@@ -457,9 +457,9 @@ export function TaskDetail({ taskId, open, onOpenChange }: TaskDetailProps) {
 
             {/* History Tab */}
             <TabsContent value="history" className="space-y-4 max-h-96 overflow-y-auto">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Riwayat Tugas</CardTitle>
+              <Card className="border-gray-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-medium">Riwayat Tugas</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3 p-3 border rounded-lg">

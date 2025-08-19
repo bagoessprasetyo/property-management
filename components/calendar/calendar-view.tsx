@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useProperty } from '@/lib/context/property-context'
+// Removed property context for single property setup
 import { useReservations } from '@/lib/hooks/use-reservations'
 import { useRooms } from '@/lib/hooks/use-rooms'
 import { useCalendarData, useCalendarStats, useRoomAvailability } from '@/lib/hooks/use-calendar'
@@ -22,7 +22,7 @@ export function CalendarView({
   defaultView = 'week',
   onReservationSelect 
 }: CalendarViewProps) {
-  const { currentProperty } = useProperty()
+  // Removed currentProperty for single property setup
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewType, setViewType] = useState<CalendarViewType>(defaultView)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -59,15 +59,15 @@ export function CalendarView({
 
   // Enhanced data hooks
   const { data: reservations, isLoading: reservationsLoading } = useCalendarData({
-    propertyId: currentProperty?.id || '',
+    propertyId: '',
     startDate: dateRange.start.toISOString().split('T')[0],
     endDate: dateRange.end.toISOString().split('T')[0]
   })
   
-  const { data: rooms } = useRooms(currentProperty?.id)
+  const { data: rooms } = useRooms()
   const { data: allRooms } = useRooms() // Fallback for when property rooms are empty
   const { data: calendarStats, refetch: refetchStats } = useCalendarStats(
-    currentProperty?.id,
+    '',
     dateRange.start.toISOString().split('T')[0],
     dateRange.end.toISOString().split('T')[0]
   )
@@ -149,7 +149,7 @@ export function CalendarView({
   }
 
   return (
-    <RealtimeProvider propertyId={currentProperty?.id}>
+    <RealtimeProvider propertyId={''}>
       <div className="space-y-4">
         <CalendarHeader
           currentDate={currentDate}

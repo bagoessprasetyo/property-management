@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useProperty } from '@/lib/context/property-context'
+// Removed property context for single property setup
 import { useReservations } from '@/lib/hooks/use-reservations'
 import { formatIDR } from '@/lib/utils/currency'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -47,8 +47,8 @@ import {
 } from 'lucide-react'
 
 export default function ReservationsPage() {
-  const { currentProperty } = useProperty()
-  const { data: reservations, isLoading } = useReservations(currentProperty?.id)
+  // Removed currentProperty for single property setup
+  const { data: reservations, isLoading } = useReservations()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState('all')

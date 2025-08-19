@@ -41,50 +41,38 @@ export interface RecentActivity {
   status: 'completed' | 'pending' | 'confirmed' | 'cancelled'
 }
 
-// Query keys
+// Query keys - updated for single property setup
 export const dashboardKeys = {
   all: ['dashboard'] as const,
-  stats: (propertyId?: string) => [...dashboardKeys.all, 'stats', propertyId] as const,
-  activities: (propertyId?: string) => [...dashboardKeys.all, 'activities', propertyId] as const,
-  overview: (propertyId?: string) => [...dashboardKeys.all, 'overview', propertyId] as const,
+  stats: () => [...dashboardKeys.all, 'stats'] as const,
+  activities: () => [...dashboardKeys.all, 'activities'] as const,
+  overview: () => [...dashboardKeys.all, 'overview'] as const,
 }
 
 // Get dashboard statistics
-export function useDashboardStats(propertyId?: string) {
+export function useDashboardStats() {
   return useQuery({
-    queryKey: dashboardKeys.stats(propertyId),
+    queryKey: dashboardKeys.stats(),
     queryFn: async (): Promise<DashboardStats> => {
       const today = new Date().toISOString().split('T')[0]
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       const thisMonth = new Date().toISOString().slice(0, 7)
       const lastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 7)
 
-      // Rooms query
-      let roomsQuery = supabase
+      // Rooms query - removed property filtering for single property setup
+      const roomsQuery = supabase
         .from('rooms')
         .select('status, is_active')
-      
-      if (propertyId) {
-        roomsQuery = roomsQuery.eq('property_id', propertyId)
-      }
 
-      // Reservations query
-      let reservationsQuery = supabase
+      // Reservations query - removed property filtering for single property setup
+      const reservationsQuery = supabase
         .from('reservations')
         .select('status, check_in_date, check_out_date, total_amount, created_at, rooms(property_id)')
-      
-      if (propertyId) {
-        reservationsQuery = reservationsQuery.eq('rooms.property_id', propertyId)
-      }
 
-      // Housekeeping query
-      let housekeepingQuery = supabase
+      // Housekeeping query - removed property filtering for single property setup
+      const housekeepingQuery = supabase
         .from('housekeeping')
         .select('status, scheduled_date, completed_at')
-      
-      if (propertyId) {
-        housekeepingQuery = housekeepingQuery.eq('property_id', propertyId)
-      }
 
       // Execute queries in parallel
       const [roomsResult, reservationsResult, housekeepingResult] = await Promise.all([
@@ -124,7 +112,7 @@ export function useDashboardStats(propertyId?: string) {
         .filter(r => 
           r.check_in_date && 
           r.check_in_date.startsWith(thisMonth) && 
-          r.status === 'checked_in'
+          r.status !== 'cancelled' // Include all non-cancelled reservations
         )
         .reduce((sum, r) => sum + (r.total_amount || 0), 0)
 
@@ -180,15 +168,15 @@ export function useDashboardStats(propertyId?: string) {
 }
 
 // Get recent activities
-export function useRecentActivities(propertyId?: string, limit: number = 10) {
+export function useRecentActivities(limit: number = 10) {
   return useQuery({
-    queryKey: dashboardKeys.activities(propertyId),
+    queryKey: dashboardKeys.activities(),
     queryFn: async (): Promise<RecentActivity[]> => {
       const today = new Date().toISOString().split('T')[0]
       const activities: RecentActivity[] = []
 
-      // Get recent reservations  
-      let reservationsQuery = supabase
+      // Get recent reservations - removed property filtering for single property setup
+      const reservationsQuery = supabase
         .from('reservations')
         .select(`
           id,
@@ -204,13 +192,9 @@ export function useRecentActivities(propertyId?: string, limit: number = 10) {
         `)
         .order('updated_at', { ascending: false })
         .limit(20)
-      
-      if (propertyId) {
-        reservationsQuery = reservationsQuery.eq('rooms.property_id', propertyId)
-      }
 
-      // Get recent housekeeping tasks
-      let housekeepingQuery = supabase
+      // Get recent housekeeping tasks - removed property filtering for single property setup
+      const housekeepingQuery = supabase
         .from('housekeeping')
         .select(`
           id,
@@ -224,10 +208,6 @@ export function useRecentActivities(propertyId?: string, limit: number = 10) {
         `)
         .order('updated_at', { ascending: false })
         .limit(10)
-      
-      if (propertyId) {
-        housekeepingQuery = housekeepingQuery.eq('property_id', propertyId)
-      }
 
       const [reservationsResult, housekeepingResult] = await Promise.all([
         reservationsQuery,
@@ -246,7 +226,7 @@ export function useRecentActivities(propertyId?: string, limit: number = 10) {
           ? `${reservation.guests[0].first_name} ${reservation.guests[0].last_name}`.trim()
           : 'Tamu'
         const roomNumber = reservation.rooms && reservation.rooms.length > 0
-          ? reservation.rooms[0].room_number || 'N/A'
+          ? reservation.rooms[0].room_number || 'N/A' 
           : 'N/A'
 
         // Check-in activities
@@ -315,8 +295,8 @@ export function useRecentActivities(propertyId?: string, limit: number = 10) {
             title: 'Housekeeping Selesai',
             description: `${task.task_type} selesai oleh ${task.assigned_to || 'Staff'}`,
             roomNumber: task.rooms && task.rooms.length > 0
-          ? task.rooms[0].room_number || 'N/A'
-          : 'N/A',
+              ? task.rooms[0].room_number || 'N/A'
+              : 'N/A',
             timestamp: task.completed_at,
             status: 'completed'
           })
@@ -333,15 +313,15 @@ export function useRecentActivities(propertyId?: string, limit: number = 10) {
 }
 
 // Get upcoming activities (arrivals, departures, tasks)
-export function useUpcomingActivities(propertyId?: string) {
+export function useUpcomingActivities() {
   return useQuery({
-    queryKey: [...dashboardKeys.all, 'upcoming', propertyId],
+    queryKey: [...dashboardKeys.all, 'upcoming'],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0]
       const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
-      // Get today's arrivals that haven't checked in
-      let arrivalsQuery = supabase
+      // Get today's arrivals that haven't checked in - removed property filtering
+      const arrivalsQuery = supabase
         .from('reservations')
         .select(`
           id,
@@ -353,13 +333,9 @@ export function useUpcomingActivities(propertyId?: string) {
         `)
         .eq('check_in_date', today)
         .eq('status', 'confirmed')
-      
-      if (propertyId) {
-        arrivalsQuery = arrivalsQuery.eq('rooms.property_id', propertyId)
-      }
 
-      // Get today's departures that haven't checked out
-      let departuresQuery = supabase
+      // Get today's departures that haven't checked out - removed property filtering
+      const departuresQuery = supabase
         .from('reservations')
         .select(`
           id,
@@ -371,13 +347,9 @@ export function useUpcomingActivities(propertyId?: string) {
         `)
         .eq('check_out_date', today)
         .eq('status', 'checked_in')
-      
-      if (propertyId) {
-        departuresQuery = departuresQuery.eq('rooms.property_id', propertyId)
-      }
 
-      // Get pending housekeeping tasks for today
-      let tasksQuery = supabase
+      // Get pending housekeeping tasks for today - removed property filtering
+      const tasksQuery = supabase
         .from('housekeeping')
         .select(`
           id,
@@ -389,10 +361,6 @@ export function useUpcomingActivities(propertyId?: string) {
         `)
         .eq('scheduled_date', today)
         .eq('status', 'pending')
-      
-      if (propertyId) {
-        tasksQuery = tasksQuery.eq('property_id', propertyId)
-      }
 
       const [arrivalsResult, departuresResult, tasksResult] = await Promise.all([
         arrivalsQuery,

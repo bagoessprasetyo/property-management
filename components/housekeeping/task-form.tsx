@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Resolver, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCreateHousekeepingTask, useUpdateHousekeepingTask } from '@/lib/hooks/use-housekeeping'
 import { useRooms } from '@/lib/hooks/use-rooms'
-import { useProperty } from '@/lib/context/property-context'
+// Removed property context since we're working with single property
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -91,11 +91,11 @@ interface TaskFormProps {
 export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomId }: TaskFormProps) {
   const [checklistItems, setChecklistItems] = useState<Array<{item: string, completed: boolean}>>([])
   const isEditing = !!task
-  const { currentProperty } = useProperty()
+  // Removed currentProperty since we're working with single property
 
   const createTask = useCreateHousekeepingTask()
   const updateTask = useUpdateHousekeepingTask()
-  const { data: rooms } = useRooms(currentProperty?.id)
+  const { data: rooms, isLoading: roomsLoading, error: roomsError } = useRooms()
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskFormSchema) as Resolver<TaskFormData>,
@@ -179,7 +179,7 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
 
       const formattedData = {
         ...data,
-        property_id: currentProperty?.id,
+        property_id: '00000000-0000-0000-0000-000000000000', // Default property ID for single property setup
         checklist: checklistItems,
         assigned_to: data.assigned_to || null,
         scheduled_time: data.scheduled_time || null,
@@ -193,13 +193,7 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
         })
         logger.info('Housekeeping task updated successfully', { taskId: task.id })
       } else {
-        if (!currentProperty?.id) {
-          throw new Error('Property ID is required')
-        }
-        await createTask.mutateAsync({
-          ...formattedData,
-          property_id: currentProperty.id
-        })
+        await createTask.mutateAsync(formattedData)
         logger.info('Housekeeping task created successfully')
       }
 
@@ -240,12 +234,14 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5" />
+        <DialogHeader className="pb-4">
+          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+            <div className="p-1.5 bg-gray-100 rounded-md">
+              <Sparkles className="w-4 h-4 text-gray-600" />
+            </div>
             {isEditing ? 'Edit Tugas Housekeeping' : 'Tambah Tugas Housekeeping'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm text-gray-600">
             {isEditing 
               ? 'Perbarui informasi tugas housekeeping'
               : 'Buat tugas housekeeping baru untuk kamar'
@@ -271,24 +267,37 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {rooms?.map(room => (
-                            <SelectItem key={room.id} value={room.id}>
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <Bed className="w-4 h-4 text-blue-600" />
-                                </div>
-                                <div>
-                                  <div className="font-medium">
-                                    Kamar {room.room_number}
-                                  </div>
-                                  <div className="text-sm text-gray-500">
-                                    {room.room_type} • {room.status === 'clean' ? 'Bersih' : 
-                                     room.status === 'dirty' ? 'Kotor' : 'Maintenance'}
-                                  </div>
-                                </div>
+                          {roomsLoading ? (
+                            <div className="flex items-center justify-center p-4">
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                                Memuat kamar...
                               </div>
-                            </SelectItem>
-                          ))}
+                            </div>
+                          ) : rooms && rooms.length > 0 ? (
+                            rooms.map(room => (
+                              <SelectItem key={room.id} value={room.id}>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-6 h-6 bg-gray-100 rounded-md flex items-center justify-center">
+                                    <Bed className="w-3 h-3 text-gray-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium">
+                                      Kamar {room.room_number}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {room.room_type} • {room.status === 'clean' ? 'Bersih' : 
+                                       room.status === 'dirty' ? 'Kotor' : 'Maintenance'}
+                                    </div>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <div className="flex items-center justify-center p-4">
+                              <div className="text-sm text-gray-500">Tidak ada kamar tersedia</div>
+                            </div>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -330,14 +339,14 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
 
               {/* Selected Room Info */}
               {selectedRoom && (
-                <Card className="bg-blue-50 border-blue-200">
+                <Card className="bg-gray-50 border-gray-200">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Bed className="w-6 h-6 text-blue-600" />
+                      <div className="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center">
+                        <Bed className="w-5 h-5 text-gray-600" />
                       </div>
                       <div>
-                        <h3 className="font-medium">
+                        <h3 className="font-medium text-gray-900">
                           Kamar {selectedRoom.room_number}
                         </h3>
                         <p className="text-sm text-gray-600">
@@ -345,15 +354,15 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge className={
-                            selectedRoom.status === 'clean' ? 'bg-green-100 text-green-800' :
-                            selectedRoom.status === 'dirty' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
+                            selectedRoom.status === 'clean' ? 'bg-green-100 text-green-800 border-green-200' :
+                            selectedRoom.status === 'dirty' ? 'bg-amber-100 text-amber-800 border-amber-200' :
+                            'bg-red-100 text-red-800 border-red-200'
                           }>
                             {selectedRoom.status === 'clean' ? 'Bersih' :
                              selectedRoom.status === 'dirty' ? 'Kotor' : 'Maintenance'}
                           </Badge>
                           {selectedTaskType && (
-                            <Badge variant="outline" className="flex items-center gap-1">
+                            <Badge variant="outline" className="flex items-center gap-1 border-gray-200">
                               <selectedTaskType.icon className="w-3 h-3" />
                               {selectedTaskType.label}
                             </Badge>
@@ -519,23 +528,24 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
                 </div>
                 
                 {checklistItems.length > 0 && (
-                  <Card>
-                    <CardContent className="p-4 space-y-2">
+                  <Card className="border-gray-200">
+                    <CardContent className="p-4 space-y-3">
                       {checklistItems.map((item, index) => (
-                        <div key={index} className="flex items-center gap-2">
+                        <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
                           <Input
                             placeholder="Item checklist..."
                             value={item.item}
                             onChange={(e) => updateChecklistItem(index, 'item', e.target.value)}
-                            className="flex-1"
+                            className="flex-1 border-0 bg-transparent focus:bg-white"
                           />
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
                             onClick={() => removeChecklistItem(index)}
+                            className="text-gray-400 hover:text-red-500"
                           >
-                            <X className="w-4 h-4 text-red-500" />
+                            <X className="w-4 h-4" />
                           </Button>
                         </div>
                       ))}
@@ -550,7 +560,7 @@ export function TaskForm({ task, open, onOpenChange, onSuccess, preselectedRoomI
                 <X className="w-4 h-4 mr-2" />
                 Batal
               </Button>
-              <Button type="submit" disabled={isLoading} className="bg-warm-brown-600 hover:bg-warm-brown-700">
+              <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

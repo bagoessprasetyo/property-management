@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo, memo, useCallback } from 'react'
 import { Resolver, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -16,6 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Progress } from '@/components/ui/progress'
 import { 
   User, 
   Mail, 
@@ -28,7 +29,13 @@ import {
   Save,
   X,
   Plus,
-  AlertCircle
+  AlertCircle,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Heart,
+  Shield
 } from 'lucide-react'
 import { logger } from '@/lib/utils/logger'
 
@@ -94,8 +101,10 @@ interface GuestFormProps {
   onSuccess?: () => void
 }
 
-export function GuestForm({ guest, open, onOpenChange, onSuccess }: GuestFormProps) {
+export const GuestForm = memo(function GuestForm({ guest, open, onOpenChange, onSuccess }: GuestFormProps) {
   const [currentTab, setCurrentTab] = useState('basic')
+  const [formProgress, setFormProgress] = useState(0)
+  const [savedData, setSavedData] = useState<Partial<GuestFormData>>({})
   const isEditing = !!guest
 
   const createGuest = useCreateGuest()
@@ -126,7 +135,76 @@ export function GuestForm({ guest, open, onOpenChange, onSuccess }: GuestFormPro
     },
   })
 
-  const onSubmit = async (data: GuestFormData) => {
+  // Watch form values for progress calculation
+  const watchedValues = form.watch()
+
+  // Calculate form completion progress
+  const progress = useMemo(() => {
+    const requiredFields = ['first_name', 'last_name', 'phone', 'identification_type', 'identification_number', 'nationality']
+    const optionalFields = ['email', 'date_of_birth', 'gender', 'address', 'city', 'state', 'country', 'postal_code', 'emergency_contact_name', 'emergency_contact_phone']
+    
+    const completedRequired = requiredFields.filter(field => {
+      const value = watchedValues[field as keyof GuestFormData]
+      return value && value.toString().trim() !== ''
+    }).length
+    
+    const completedOptional = optionalFields.filter(field => {
+      const value = watchedValues[field as keyof GuestFormData]
+      return value && value.toString().trim() !== ''
+    }).length
+    
+    // Required fields count as 70%, optional as 30%
+    const requiredPercentage = (completedRequired / requiredFields.length) * 70
+    const optionalPercentage = (completedOptional / optionalFields.length) * 30
+    
+    return Math.round(requiredPercentage + optionalPercentage)
+  }, [watchedValues])
+
+  // Auto-save functionality
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (progress > 0 && !isEditing) {
+        setSavedData(watchedValues)
+        localStorage.setItem('guest_form_draft', JSON.stringify(watchedValues))
+      }
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [watchedValues, progress, isEditing])
+
+  // Load saved draft on mount
+  useEffect(() => {
+    if (!guest && open) {
+      const savedDraft = localStorage.getItem('guest_form_draft')
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft)
+          Object.keys(parsed).forEach(key => {
+            if (parsed[key]) {
+              form.setValue(key as keyof GuestFormData, parsed[key])
+            }
+          })
+        } catch (error) {
+          console.error('Failed to load saved draft:', error)
+        }
+      }
+    }
+  }, [guest, open, form])
+
+  // Tab completion status
+  const tabStatus = useMemo(() => {
+    const basic = form.getValues(['first_name', 'last_name', 'identification_type', 'identification_number', 'nationality'])
+    const contact = form.getValues(['phone'])
+    const preferences = true // Always considered complete as all fields are optional
+    
+    return {
+      basic: basic.every(val => val && val.toString().trim() !== ''),
+      contact: contact.every(val => val && val.toString().trim() !== ''),
+      preferences
+    }
+  }, [watchedValues])
+
+  const onSubmit = useCallback(async (data: GuestFormData) => {
     try {
       logger.info(`${isEditing ? 'Updating' : 'Creating'} guest`, { 
         guestId: guest?.id,
@@ -168,52 +246,153 @@ export function GuestForm({ guest, open, onOpenChange, onSuccess }: GuestFormPro
     } catch (error) {
       logger.error(`Failed to ${isEditing ? 'update' : 'create'} guest`, error)
     }
-  }
+  }, [guest, isEditing, createGuest, updateGuest, onOpenChange, onSuccess, form])
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
+    // Clear saved draft when closing
+    if (!isEditing) {
+      localStorage.removeItem('guest_form_draft')
+    }
     onOpenChange(false)
     form.reset()
     setCurrentTab('basic')
+    setFormProgress(0)
+  }, [isEditing, onOpenChange, form])
+
+  const navigateToTab = useCallback((direction: 'next' | 'prev') => {
+    const tabs = ['basic', 'contact', 'preferences']
+    const currentIndex = tabs.indexOf(currentTab)
+    
+    if (direction === 'next' && currentIndex < tabs.length - 1) {
+      setCurrentTab(tabs[currentIndex + 1])
+    } else if (direction === 'prev' && currentIndex > 0) {
+      setCurrentTab(tabs[currentIndex - 1])
+    }
+  }, [currentTab])
+
+  const TabIcon = ({ tabName, completed }: { tabName: string; completed: boolean }) => {
+    const icons = {
+      basic: User,
+      contact: Phone,
+      preferences: Heart
+    }
+    const Icon = icons[tabName as keyof typeof icons] || User
+    
+    return (
+      <div className={`flex items-center justify-center w-6 h-6 rounded-full mr-2 transition-colors ${
+        completed ? 'bg-green-500 text-white' : currentTab === tabName ? 'bg-warm-brown-600 text-white' : 'bg-gray-200 text-gray-500'
+      }`}>
+        {completed ? <Check className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
+      </div>
+    )
   }
 
   const isLoading = createGuest.isPending || updateGuest.isPending
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
-            {isEditing ? 'Edit Tamu' : 'Tambah Tamu Baru'}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing 
-              ? 'Perbarui informasi tamu yang sudah ada'
-              : 'Masukkan informasi tamu baru dengan lengkap'
-            }
-          </DialogDescription>
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden">
+        <DialogHeader className="relative overflow-hidden rounded-t-lg bg-gradient-to-r from-warm-brown-50 to-amber-50 p-6 -m-6 mb-6 border-b border-warm-brown-200">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-warm-brown-100/20 via-transparent to-transparent" />
+          <div className="relative">
+            <DialogTitle className="flex items-center gap-3 text-2xl">
+              <div className="p-3 bg-gradient-to-br from-warm-brown-600 to-warm-brown-700 rounded-xl shadow-lg">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <span>{isEditing ? 'Edit Tamu' : 'Tambah Tamu Baru'}</span>
+                {!isEditing && progress > 0 && (
+                  <Badge className="ml-3 bg-green-100 text-green-800">
+                    Draft tersimpan
+                  </Badge>
+                )}
+              </div>
+            </DialogTitle>
+            <DialogDescription className="mt-3 text-warm-brown-700">
+              {isEditing 
+                ? 'Perbarui informasi tamu yang sudah ada'
+                : 'Masukkan informasi tamu baru dengan lengkap untuk mendapatkan pengalaman terbaik'
+              }
+            </DialogDescription>
+            
+            {/* Progress Bar */}
+            {!isEditing && (
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-warm-brown-600 font-medium">Progress Pengisian</span>
+                  <span className="text-warm-brown-600">{progress}%</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
+            )}
+          </div>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="basic">Informasi Dasar</TabsTrigger>
-                <TabsTrigger value="contact">Kontak & Alamat</TabsTrigger>
-                <TabsTrigger value="preferences">Preferensi</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 h-auto p-2 bg-gray-50">
+                <TabsTrigger 
+                  value="basic" 
+                  className="flex items-center py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                >
+                  <TabIcon tabName="basic" completed={tabStatus.basic} />
+                  <div className="text-left">
+                    <div className="font-medium">Informasi Dasar</div>
+                    <div className="text-xs text-gray-500">Data identitas</div>
+                  </div>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="contact" 
+                  className="flex items-center py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                >
+                  <TabIcon tabName="contact" completed={tabStatus.contact} />
+                  <div className="text-left">
+                    <div className="font-medium">Kontak & Alamat</div>
+                    <div className="text-xs text-gray-500">Informasi kontak</div>
+                  </div>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="preferences" 
+                  className="flex items-center py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                >
+                  <TabIcon tabName="preferences" completed={tabStatus.preferences} />
+                  <div className="text-left">
+                    <div className="font-medium">Preferensi</div>
+                    <div className="text-xs text-gray-500">Kebutuhan khusus</div>
+                  </div>
+                </TabsTrigger>
               </TabsList>
 
               {/* Basic Information Tab */}
-              <TabsContent value="basic" className="space-y-4 max-h-96 overflow-y-auto">
-                <div className="grid grid-cols-2 gap-4">
+              <TabsContent value="basic" className="space-y-6 max-h-96 overflow-y-auto">
+                {/* Header */}
+                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <User className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Informasi Dasar</h3>
+                    <p className="text-sm text-gray-600">Data identitas dan informasi pribadi tamu</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="first_name"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nama Depan *</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel className="flex items-center gap-2 font-medium text-gray-700">
+                          <User className="w-4 h-4" />
+                          Nama Depan *
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="Masukkan nama depan" {...field} />
+                          <Input 
+                            placeholder="Masukkan nama depan"
+                            className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -224,10 +403,17 @@ export function GuestForm({ guest, open, onOpenChange, onSuccess }: GuestFormPro
                     control={form.control}
                     name="last_name"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nama Belakang *</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel className="flex items-center gap-2 font-medium text-gray-700">
+                          <User className="w-4 h-4" />
+                          Nama Belakang *
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="Masukkan nama belakang" {...field} />
+                          <Input 
+                            placeholder="Masukkan nama belakang"
+                            className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -235,24 +421,59 @@ export function GuestForm({ guest, open, onOpenChange, onSuccess }: GuestFormPro
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="identification_type"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tipe Identitas *</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel className="flex items-center gap-2 font-medium text-gray-700">
+                          <CreditCard className="w-4 h-4" />
+                          Tipe Identitas *
+                        </FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-11 bg-gray-50 border-gray-200 focus:bg-white">
                               <SelectValue placeholder="Pilih tipe identitas" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="KTP">KTP</SelectItem>
-                            <SelectItem value="Passport">Passport</SelectItem>
-                            <SelectItem value="SIM">SIM</SelectItem>
-                            <SelectItem value="Other">Lainnya</SelectItem>
+                            <SelectItem value="KTP">
+                              <div className="flex items-center gap-2">
+                                <Shield className="w-4 h-4 text-blue-600" />
+                                <div>
+                                  <div className="font-medium">KTP</div>
+                                  <div className="text-xs text-gray-500">Kartu Tanda Penduduk</div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Passport">
+                              <div className="flex items-center gap-2">
+                                <Globe className="w-4 h-4 text-green-600" />
+                                <div>
+                                  <div className="font-medium">Passport</div>
+                                  <div className="text-xs text-gray-500">Paspor</div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="SIM">
+                              <div className="flex items-center gap-2">
+                                <CreditCard className="w-4 h-4 text-purple-600" />
+                                <div>
+                                  <div className="font-medium">SIM</div>
+                                  <div className="text-xs text-gray-500">Surat Izin Mengemudi</div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Other">
+                              <div className="flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-gray-600" />
+                                <div>
+                                  <div className="font-medium">Lainnya</div>
+                                  <div className="text-xs text-gray-500">Identitas lain</div>
+                                </div>
+                              </div>
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -264,17 +485,24 @@ export function GuestForm({ guest, open, onOpenChange, onSuccess }: GuestFormPro
                     control={form.control}
                     name="identification_number"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nomor Identitas *</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel className="flex items-center gap-2 font-medium text-gray-700">
+                          <CreditCard className="w-4 h-4" />
+                          Nomor Identitas *
+                        </FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder={form.watch('identification_type') === 'KTP' ? '16 digit KTP' : 'Nomor identitas'} 
+                            placeholder={form.watch('identification_type') === 'KTP' ? '16 digit KTP' : 'Nomor identitas'}
+                            className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-colors font-mono"
                             {...field} 
                           />
                         </FormControl>
                         <FormMessage />
                         {form.watch('identification_type') === 'KTP' && (
-                          <p className="text-xs text-gray-500">Format KTP: 16 digit angka</p>
+                          <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                            <AlertCircle className="w-3 h-3" />
+                            <span>Format KTP: 16 digit angka</span>
+                          </div>
                         )}
                       </FormItem>
                     )}
@@ -336,35 +564,69 @@ export function GuestForm({ guest, open, onOpenChange, onSuccess }: GuestFormPro
               </TabsContent>
 
               {/* Contact & Address Tab */}
-              <TabsContent value="contact" className="space-y-4 max-h-96 overflow-y-auto">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="email@contoh.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <TabsContent value="contact" className="space-y-6 max-h-96 overflow-y-auto">
+                {/* Header */}
+                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Phone className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Kontak & Alamat</h3>
+                    <p className="text-sm text-gray-600">Informasi kontak dan alamat lengkap tamu</p>
+                  </div>
+                </div>
 
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nomor Telepon *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="08123456789 atau +6281234567890" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                {/* Contact Information */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    Informasi Kontak
+                  </h4>
+                  
+                  <div className="grid grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="flex items-center gap-2 font-medium text-gray-700">
+                            <Mail className="w-4 h-4" />
+                            Email
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="email" 
+                              placeholder="email@contoh.com"
+                              className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="flex items-center gap-2 font-medium text-gray-700">
+                            <Phone className="w-4 h-4" />
+                            Nomor Telepon *
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="08123456789 atau +6281234567890"
+                              className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
                 <FormField
@@ -492,99 +754,177 @@ export function GuestForm({ guest, open, onOpenChange, onSuccess }: GuestFormPro
               </TabsContent>
 
               {/* Preferences Tab */}
-              <TabsContent value="preferences" className="space-y-4 max-h-96 overflow-y-auto">
-                <FormField
-                  control={form.control}
-                  name="dietary_restrictions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pantangan Makanan</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Vegetarian, halal, alergi seafood, dll..."
-                          className="min-h-20"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <TabsContent value="preferences" className="space-y-6 max-h-96 overflow-y-auto">
+                {/* Header */}
+                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Heart className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Preferensi & Catatan</h3>
+                    <p className="text-sm text-gray-600">Kebutuhan khusus dan catatan tambahan</p>
+                  </div>
+                </div>
 
-                <FormField
-                  control={form.control}
-                  name="special_requests"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Permintaan Khusus</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Kamar lantai atas, tempat tidur tambahan, dll..."
-                          className="min-h-20"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="dietary_restrictions"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel className="flex items-center gap-2 font-medium text-gray-700">
+                          <Heart className="w-4 h-4" />
+                          Pantangan Makanan
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Contoh: Vegetarian, halal, alergi seafood, tidak makan daging sapi..."
+                            className="min-h-24 bg-gray-50 border-gray-200 focus:bg-white transition-colors resize-none"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <p className="text-xs text-gray-500">Informasi ini membantu kami menyediakan layanan makanan yang sesuai</p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Catatan Tambahan</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Catatan internal tentang tamu..."
-                          className="min-h-20"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="special_requests"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel className="flex items-center gap-2 font-medium text-gray-700">
+                          <Settings className="w-4 h-4" />
+                          Permintaan Khusus
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Contoh: Kamar lantai atas, tempat tidur tambahan, late check-in, welcome drink..."
+                            className="min-h-24 bg-gray-50 border-gray-200 focus:bg-white transition-colors resize-none"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <p className="text-xs text-gray-500">Kami akan berusaha memenuhi permintaan sesuai ketersediaan</p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                {form.watch('identification_type') === 'KTP' && form.watch('nationality') === 'Indonesia' && (
-                  <Card className="bg-blue-50 border-blue-200">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
-                        <div className="text-sm text-blue-800">
-                          <p className="font-medium">Tamu Indonesia</p>
-                          <p>Pastikan nomor KTP valid (16 digit) untuk keperluan pelaporan ke pemerintah.</p>
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel className="flex items-center gap-2 font-medium text-gray-700">
+                          <FileText className="w-4 h-4" />
+                          Catatan Internal
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Catatan internal untuk staff hotel tentang tamu ini..."
+                            className="min-h-24 bg-gray-50 border-gray-200 focus:bg-white transition-colors resize-none"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <p className="text-xs text-gray-500">Catatan ini hanya untuk internal hotel dan tidak akan diberitahukan kepada tamu</p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Info Cards */}
+                  <div className="space-y-3">
+                    {form.watch('identification_type') === 'KTP' && form.watch('nationality') === 'Indonesia' && (
+                      <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 shadow-sm">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 bg-blue-500 rounded-full">
+                              <Shield className="w-4 h-4 text-white" />
+                            </div>
+                            <div className="text-sm text-blue-800">
+                              <p className="font-semibold mb-1">Tamu Indonesia</p>
+                              <p>Pastikan nomor KTP valid (16 digit) untuk keperluan pelaporan ke pemerintah sesuai regulasi.</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    <Card className="bg-gradient-to-r from-green-50 to-emerald-100 border-green-200 shadow-sm">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-green-500 rounded-full">
+                            <Check className="w-4 h-4 text-white" />
+                          </div>
+                          <div className="text-sm text-green-800">
+                            <p className="font-semibold mb-1">Tips untuk Form yang Baik</p>
+                            <p>Semakin lengkap informasi yang diberikan, semakin personal layanan yang dapat kami berikan.</p>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               </TabsContent>
             </Tabs>
 
-            <DialogFooter className="gap-2">
-              <Button type="button" variant="outline" onClick={handleClose}>
-                <X className="w-4 h-4 mr-2" />
-                Batal
-              </Button>
-              <Button type="submit" disabled={isLoading} className="bg-warm-brown-600 hover:bg-warm-brown-700">
-                {isLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    {isEditing ? 'Menyimpan...' : 'Membuat...'}
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    {isEditing ? 'Simpan Perubahan' : 'Buat Tamu'}
-                  </>
-                )}
-              </Button>
+            <DialogFooter className="gap-3 pt-6 border-t border-gray-200">
+              {/* Navigation Buttons */}
+              <div className="flex justify-between w-full">
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => navigateToTab('prev')}
+                    disabled={currentTab === 'basic'}
+                    className="min-w-24"
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Sebelumnya
+                  </Button>
+                  
+                  {currentTab !== 'preferences' && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => navigateToTab('next')}
+                      className="min-w-24"
+                    >
+                      Selanjutnya
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  )}
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={handleClose}>
+                    <X className="w-4 h-4 mr-2" />
+                    Batal
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading || (!tabStatus.basic || !tabStatus.contact)} 
+                    className="bg-gradient-to-r from-warm-brown-600 to-warm-brown-700 hover:from-warm-brown-700 hover:to-warm-brown-800 shadow-lg min-w-32"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        {isEditing ? 'Menyimpan...' : 'Membuat...'}
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        {isEditing ? 'Simpan Perubahan' : 'Buat Tamu'}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
   )
-}
+})

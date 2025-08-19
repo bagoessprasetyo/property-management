@@ -22,15 +22,10 @@ export function useRooms(propertyId?: string) {
   return useQuery({
     queryKey: roomKeys.list({ propertyId }),
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('rooms')
         .select('*')
-
-      if (propertyId) {
-        query = query.eq('property_id', propertyId)
-      }
-
-      const { data, error } = await query.order('room_number', { ascending: true })
+        .order('room_number', { ascending: true })
 
       if (error) throw error
       return data

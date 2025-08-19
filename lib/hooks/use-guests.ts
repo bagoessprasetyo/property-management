@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/types/database'
+import { toast } from 'sonner'
 
 type Guest = Database['public']['Tables']['guests']['Row']
 type GuestInsert = Database['public']['Tables']['guests']['Insert']
@@ -122,8 +123,12 @@ export function useCreateGuest() {
       if (error) throw error
       return data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: guestKeys.all })
+      // Toast notification will be handled in the component for better UX
+    },
+    onError: (error: any) => {
+      // Error toast will be handled in the component for better UX  
     },
   })
 }

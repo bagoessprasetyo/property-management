@@ -46,9 +46,7 @@ export function useReservations(propertyId?: string, filters?: {
           )
         `)
 
-      if (propertyId) {
-        query = query.eq('rooms.property_id', propertyId)
-      }
+      // Removed property filtering for single property setup
 
       if (filters?.status) {
         query = query.eq('status', filters.status)
@@ -259,6 +257,71 @@ export function useCreateReservation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: reservationKeys.all })
+    },
+  })
+}
+
+// Create reservation with payment
+export function useCreateReservationWithPayment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ reservation, paymentStatus }: { 
+      reservation: ReservationInsert, 
+      paymentStatus?: 'unpaid' | 'partial' | 'paid' 
+    }) => {
+      // First, create the reservation
+      const { data: reservationData, error: reservationError } = await supabase
+        .from('reservations')
+        .insert(reservation)
+        .select(`
+          *,
+          guests (
+            first_name,
+            last_name,
+            email,
+            phone
+          ),
+          rooms (
+            room_number,
+            room_type
+          )
+        `)
+        .single()
+
+      if (reservationError) throw reservationError
+
+      // If payment status is 'paid' or 'partial', create a payment record
+      if (paymentStatus === 'paid' || paymentStatus === 'partial') {
+        const paymentAmount = paymentStatus === 'paid' 
+          ? reservation.total_amount 
+          : Math.round(reservation.total_amount * 0.5) // 50% for partial payment
+
+        const { error: paymentError } = await supabase
+          .from('payments')
+          .insert({
+            reservation_id: reservationData.id,
+            amount: paymentAmount,
+            currency: 'IDR',
+            payment_method: 'cash', // Default to cash, can be updated later
+            status: 'completed',
+            payment_date: new Date().toISOString(),
+            notes: `Payment automatically created for reservation ${reservationData.confirmation_number}`
+          })
+
+        if (paymentError) {
+          console.error('Failed to create payment record:', paymentError)
+          // Don't throw error here to avoid blocking reservation creation
+          // The payment can be added manually later
+        }
+      }
+
+      return reservationData
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: reservationKeys.all })
+      // Also invalidate payment queries if they exist
+      queryClient.invalidateQueries({ queryKey: ['payments'] })
     },
   })
 }

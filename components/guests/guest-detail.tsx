@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo, useCallback } from 'react'
 import { useGuest, useGuestReservations, useDeleteGuest } from '@/lib/hooks/use-guests'
 import { formatIndonesianPhone, formatKTP } from '@/lib/data/indonesian-hotel-data'
 import { formatIDR } from '@/lib/utils/currency'
@@ -40,7 +40,7 @@ interface GuestDetailProps {
   onOpenChange: (open: boolean) => void
 }
 
-export function GuestDetail({ guestId, open, onOpenChange }: GuestDetailProps) {
+export const GuestDetail = memo(function GuestDetail({ guestId, open, onOpenChange }: GuestDetailProps) {
   const [showEditForm, setShowEditForm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
@@ -48,11 +48,11 @@ export function GuestDetail({ guestId, open, onOpenChange }: GuestDetailProps) {
   const { data: reservations, isLoading: reservationsLoading } = useGuestReservations(guestId)
   const deleteGuest = useDeleteGuest()
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     setShowEditForm(true)
-  }
+  }, [])
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!guestId) return
     
     try {
@@ -64,7 +64,7 @@ export function GuestDetail({ guestId, open, onOpenChange }: GuestDetailProps) {
     } catch (error) {
       logger.error('Failed to delete guest', error)
     }
-  }
+  }, [guestId, deleteGuest, onOpenChange])
 
   const getGuestTypeInfo = () => {
     if (!guest) return null
@@ -119,48 +119,67 @@ export function GuestDetail({ guestId, open, onOpenChange }: GuestDetailProps) {
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-warm-brown-100 rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6 text-warm-brown-600" />
+        <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden">
+          <DialogHeader className="relative overflow-hidden rounded-t-lg bg-gradient-to-br from-warm-brown-50 via-warm-brown-100 to-amber-50 p-6 -m-6 mb-6 border-b border-warm-brown-200">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-warm-brown-100/20 via-transparent to-transparent" />
+            <div className="relative flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-16 h-16 bg-gradient-to-br from-warm-brown-200 to-warm-brown-300 rounded-xl flex items-center justify-center text-warm-brown-700 font-bold text-xl shadow-lg">
+                    {guest.first_name.charAt(0)}{guest.last_name.charAt(0)}
+                  </div>
+                  {isVip && (
+                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+                      <Heart className="w-3 h-3 text-white fill-current" />
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <DialogTitle className="text-xl">
+                <div className="space-y-2">
+                  <DialogTitle className="text-2xl font-bold text-gray-900">
                     {guest.first_name} {guest.last_name}
                   </DialogTitle>
-                  <DialogDescription className="flex items-center gap-2">
+                  <DialogDescription className="flex flex-wrap items-center gap-3">
                     {guestType && (
-                      <Badge className={guestType.color}>
+                      <Badge className={`${guestType.color} shadow-sm`}>
+                        {guestType.type === 'Lokal' ? (
+                          <UserCheck className="w-3 h-3 mr-1" />
+                        ) : (
+                          <Globe className="w-3 h-3 mr-1" />
+                        )}
                         {guestType.type}
                       </Badge>
                     )}
                     {isVip && (
-                      <Badge className="bg-gold-100 text-gold-800">
+                      <Badge className="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 border-amber-200 shadow-sm">
                         <Heart className="w-3 h-3 mr-1 fill-current" />
-                        VIP
+                        VIP Guest
                       </Badge>
                     )}
-                    <span className="text-sm">
+                    <div className="flex items-center text-sm text-warm-brown-700 bg-warm-brown-100 px-3 py-1 rounded-full">
+                      <Calendar className="w-3 h-3 mr-1" />
                       Member sejak {new Date(guest.created_at).toLocaleDateString('id-ID', {
                         month: 'long', year: 'numeric'
                       })}
-                    </span>
+                    </div>
                   </DialogDescription>
                 </div>
               </div>
               
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleEdit}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleEdit}
+                  className="border-warm-brown-200 text-warm-brown-700 hover:bg-warm-brown-50"
+                >
                   <Edit className="w-4 h-4 mr-2" />
-                  Edit
+                  Edit Tamu
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Hapus
@@ -170,29 +189,60 @@ export function GuestDetail({ guestId, open, onOpenChange }: GuestDetailProps) {
           </DialogHeader>
 
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="profile">Profil</TabsTrigger>
-              <TabsTrigger value="reservations">Riwayat Menginap</TabsTrigger>
-              <TabsTrigger value="preferences">Preferensi</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-auto p-2 bg-gray-50">
+              <TabsTrigger 
+                value="profile" 
+                className="flex items-center py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+              >
+                <User className="w-4 h-4 mr-2" />
+                <div className="text-left">
+                  <div className="font-medium">Profil Lengkap</div>
+                  <div className="text-xs text-gray-500">Data personal</div>
+                </div>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="reservations" 
+                className="flex items-center py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+              >
+                <Building className="w-4 h-4 mr-2" />
+                <div className="text-left">
+                  <div className="font-medium">Riwayat Menginap</div>
+                  <div className="text-xs text-gray-500">{totalStays} reservasi</div>
+                </div>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="preferences" 
+                className="flex items-center py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+              >
+                <Heart className="w-4 h-4 mr-2" />
+                <div className="text-left">
+                  <div className="font-medium">Preferensi</div>
+                  <div className="text-xs text-gray-500">Kebutuhan khusus</div>
+                </div>
+              </TabsTrigger>
             </TabsList>
 
             {/* Profile Tab */}
             <TabsContent value="profile" className="space-y-6 max-h-96 overflow-y-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Basic Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <UserCheck className="w-5 h-5" />
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/30">
+                  <CardHeader className="bg-gradient-to-r from-blue-100 to-blue-200/50 border-b border-blue-200">
+                    <CardTitle className="flex items-center gap-3 text-blue-900">
+                      <div className="p-2 bg-blue-500 rounded-lg">
+                        <UserCheck className="w-5 h-5 text-white" />
+                      </div>
                       Informasi Dasar
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <CreditCard className="w-4 h-4 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-600">Identitas</p>
-                        <p className="font-medium">
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex items-start gap-4 p-3 bg-white/60 rounded-lg">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <CreditCard className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-blue-700">Identitas</p>
+                        <p className="font-semibold text-gray-900">
                           {guest.identification_type}: {
                             guest.identification_type === 'KTP' 
                               ? formatKTP(guest.identification_number)
@@ -202,20 +252,24 @@ export function GuestDetail({ guestId, open, onOpenChange }: GuestDetailProps) {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <Globe className="w-4 h-4 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-600">Kewarganegaraan</p>
-                        <p className="font-medium">{guest.nationality}</p>
+                    <div className="flex items-start gap-4 p-3 bg-white/60 rounded-lg">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Globe className="w-4 h-4 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-green-700">Kewarganegaraan</p>
+                        <p className="font-semibold text-gray-900">{guest.nationality}</p>
                       </div>
                     </div>
 
                     {guest.date_of_birth && (
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <p className="text-sm text-gray-600">Tanggal Lahir</p>
-                          <p className="font-medium">
+                      <div className="flex items-start gap-4 p-3 bg-white/60 rounded-lg">
+                        <div className="p-2 bg-purple-100 rounded-lg">
+                          <Calendar className="w-4 h-4 text-purple-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-purple-700">Tanggal Lahir</p>
+                          <p className="font-semibold text-gray-900">
                             {new Date(guest.date_of_birth).toLocaleDateString('id-ID', {
                               day: 'numeric',
                               month: 'long',
@@ -227,11 +281,13 @@ export function GuestDetail({ guestId, open, onOpenChange }: GuestDetailProps) {
                     )}
 
                     {guest.gender && (
-                      <div className="flex items-center gap-3">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <p className="text-sm text-gray-600">Jenis Kelamin</p>
-                          <p className="font-medium">
+                      <div className="flex items-start gap-4 p-3 bg-white/60 rounded-lg">
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                          <User className="w-4 h-4 text-orange-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-orange-700">Jenis Kelamin</p>
+                          <p className="font-semibold text-gray-900">
                             {guest.gender === 'male' ? 'Laki-laki' : 
                              guest.gender === 'female' ? 'Perempuan' : 'Lainnya'}
                           </p>
@@ -242,40 +298,48 @@ export function GuestDetail({ guestId, open, onOpenChange }: GuestDetailProps) {
                 </Card>
 
                 {/* Contact Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Phone className="w-5 h-5" />
-                      Kontak
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-100/30">
+                  <CardHeader className="bg-gradient-to-r from-green-100 to-emerald-200/50 border-b border-green-200">
+                    <CardTitle className="flex items-center gap-3 text-green-900">
+                      <div className="p-2 bg-green-500 rounded-lg">
+                        <Phone className="w-5 h-5 text-white" />
+                      </div>
+                      Informasi Kontak
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="p-6 space-y-4">
                     {guest.email && (
-                      <div className="flex items-center gap-3">
-                        <Mail className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <p className="text-sm text-gray-600">Email</p>
-                          <p className="font-medium">{guest.email}</p>
+                      <div className="flex items-start gap-4 p-3 bg-white/60 rounded-lg">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <Mail className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-blue-700">Email</p>
+                          <p className="font-semibold text-gray-900 break-all">{guest.email}</p>
                         </div>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-3">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-600">Telepon</p>
-                        <p className="font-medium">{formatIndonesianPhone(guest.phone)}</p>
+                    <div className="flex items-start gap-4 p-3 bg-white/60 rounded-lg">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Phone className="w-4 h-4 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-green-700">Telepon</p>
+                        <p className="font-semibold text-gray-900">{formatIndonesianPhone(guest.phone)}</p>
                       </div>
                     </div>
 
                     {guest.emergency_contact_name && (
-                      <div className="flex items-center gap-3">
-                        <AlertTriangle className="w-4 h-4 text-orange-400" />
-                        <div>
-                          <p className="text-sm text-gray-600">Kontak Darurat</p>
-                          <p className="font-medium">{guest.emergency_contact_name}</p>
+                      <div className="flex items-start gap-4 p-3 bg-white/60 rounded-lg">
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                          <AlertTriangle className="w-4 h-4 text-orange-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-orange-700">Kontak Darurat</p>
+                          <p className="font-semibold text-gray-900">{guest.emergency_contact_name}</p>
                           {guest.emergency_contact_phone && (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-600 mt-1">
                               {formatIndonesianPhone(guest.emergency_contact_phone)}
                             </p>
                           )}
@@ -308,27 +372,71 @@ export function GuestDetail({ guestId, open, onOpenChange }: GuestDetailProps) {
               )}
 
               {/* Guest Statistics */}
-              <div className="grid grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600">{totalStays}</div>
-                    <div className="text-sm text-gray-600">Total Menginap</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-6 text-center">
+                    <div className="flex items-center justify-center mb-3">
+                      <div className="p-3 bg-blue-500 rounded-xl">
+                        <Building className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="text-3xl font-bold text-blue-900 mb-2">{totalStays}</div>
+                    <div className="text-sm font-medium text-blue-700">Total Menginap</div>
+                    <div className="text-xs text-blue-600 mt-1">
+                      {totalStays > 0 ? 'Tamu berulang' : 'Tamu baru'}
+                    </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <div className="text-2xl font-bold text-green-600">
+                
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-100/50 hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-6 text-center">
+                    <div className="flex items-center justify-center mb-3">
+                      <div className="p-3 bg-green-500 rounded-xl">
+                        <CreditCard className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="text-2xl font-bold text-green-900 mb-2">
                       {formatIDR(totalSpent)}
                     </div>
-                    <div className="text-sm text-gray-600">Total Pengeluaran</div>
+                    <div className="text-sm font-medium text-green-700">Total Pengeluaran</div>
+                    <div className="text-xs text-green-600 mt-1">
+                      Nilai kontribusi
+                    </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <div className="text-2xl font-bold text-purple-600">
+                
+                <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 ${
+                  isVip 
+                    ? 'bg-gradient-to-br from-amber-50 to-orange-100/50' 
+                    : 'bg-gradient-to-br from-gray-50 to-gray-100/50'
+                }`}>
+                  <CardContent className="p-6 text-center">
+                    <div className="flex items-center justify-center mb-3">
+                      <div className={`p-3 rounded-xl ${
+                        isVip ? 'bg-amber-500' : 'bg-gray-500'
+                      }`}>
+                        {isVip ? (
+                          <Heart className="w-6 h-6 text-white fill-current" />
+                        ) : (
+                          <User className="w-6 h-6 text-white" />
+                        )}
+                      </div>
+                    </div>
+                    <div className={`text-2xl font-bold mb-2 ${
+                      isVip ? 'text-amber-900' : 'text-gray-900'
+                    }`}>
                       {isVip ? 'VIP' : 'Regular'}
                     </div>
-                    <div className="text-sm text-gray-600">Status</div>
+                    <div className={`text-sm font-medium ${
+                      isVip ? 'text-amber-700' : 'text-gray-700'
+                    }`}>
+                      Status Keanggotaan
+                    </div>
+                    <div className={`text-xs mt-1 ${
+                      isVip ? 'text-amber-600' : 'text-gray-600'
+                    }`}>
+                      {isVip ? 'Mendapat prioritas khusus' : 'Anggota standar'}
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -515,4 +623,4 @@ export function GuestDetail({ guestId, open, onOpenChange }: GuestDetailProps) {
       </Dialog>
     </>
   )
-}
+})

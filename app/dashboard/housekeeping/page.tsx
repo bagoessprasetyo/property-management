@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useProperty } from '@/lib/context/property-context'
 import { useHousekeepingTasks } from '@/lib/hooks/use-housekeeping'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { toast } from 'sonner'
 import {
   Select,
   SelectContent,
@@ -14,6 +15,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import {
   Table,
   TableBody,
@@ -37,16 +51,25 @@ import {
   Loader2,
   Calendar,
   Timer,
-  ClipboardList
+  ClipboardList,
+  Download,
+  ChevronDown,
+  FileSpreadsheet,
+  FileJson,
+  BarChart3,
+  Grid3X3,
+  List,
+  HelpCircle
 } from 'lucide-react'
 import { TaskForm } from '@/components/housekeeping/task-form'
 import { TaskDetail } from '@/components/housekeeping/task-detail'
 import { DailySchedule } from '@/components/housekeeping/daily-schedule'
+import { HousekeepingAnalytics } from '@/components/housekeeping/housekeeping-analytics'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function HousekeepingPage() {
   const { currentProperty } = useProperty()
-  const { data: tasks, isLoading } = useHousekeepingTasks(currentProperty?.id)
+  const { data: tasks, isLoading } = useHousekeepingTasks()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
@@ -55,29 +78,39 @@ export default function HousekeepingPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [showTaskDetail, setShowTaskDetail] = useState(false)
   const [activeTab, setActiveTab] = useState('tasks')
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
+  const [showExportMenu, setShowExportMenu] = useState(false)
 
-  // Filter tasks based on search and filters
-  const filteredTasks = tasks?.filter(task => {
-    const matchesSearch = 
-      task.room_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.task_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.assigned_to_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter tasks based on search and filters with memoization
+  const filteredTasks = useMemo(() => {
+    if (!tasks) return []
     
-    const matchesStatus = statusFilter === 'all' || task.status === statusFilter
-    const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter
-    const matchesAssignee = assigneeFilter === 'all' || task.assigned_to === assigneeFilter
-    
-    return matchesSearch && matchesStatus && matchesPriority && matchesAssignee
-  }) || []
+    return tasks.filter(task => {
+      const matchesSearch = 
+        task.room_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.task_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.assigned_to_name?.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      const matchesStatus = statusFilter === 'all' || task.status === statusFilter
+      const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter
+      const matchesAssignee = assigneeFilter === 'all' || task.assigned_to === assigneeFilter
+      
+      return matchesSearch && matchesStatus && matchesPriority && matchesAssignee
+    })
+  }, [tasks, searchQuery, statusFilter, priorityFilter, assigneeFilter])
 
-  // Get unique assignees for filter
-  const assignees = Array.from(new Set(
-    tasks?.filter(t => t.assigned_to && t.assigned_to_name)
+  // Get unique assignees for filter with memoization
+  const assignees = useMemo(() => {
+    if (!tasks) return []
+    
+    return Array.from(new Set(
+      tasks.filter(t => t.assigned_to && t.assigned_to_name)
            .map(t => ({ id: t.assigned_to, name: t.assigned_to_name }))
-           .map(t => JSON.stringify(t)) || []
-  )).map(str => JSON.parse(str))
+           .map(t => JSON.stringify(t))
+    )).map(str => JSON.parse(str))
+  }, [tasks])
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = useCallback((status: string) => {
     const statusConfig = {
       pending: { 
         label: 'Menunggu', 
@@ -114,9 +147,9 @@ export default function HousekeepingPage() {
         {config.label}
       </Badge>
     )
-  }
+  }, [])
 
-  const getPriorityBadge = (priority: string) => {
+  const getPriorityBadge = useCallback((priority: string) => {
     const priorityConfig = {
       low: { label: 'Rendah', color: 'bg-gray-100 text-gray-800' },
       medium: { label: 'Sedang', color: 'bg-yellow-100 text-yellow-800' },
@@ -131,9 +164,9 @@ export default function HousekeepingPage() {
         {config.label}
       </Badge>
     )
-  }
+  }, [])
 
-  const getTaskTypeLabel = (taskType: string) => {
+  const getTaskTypeLabel = useCallback((taskType: string) => {
     const typeLabels = {
       cleaning: 'Pembersihan',
       maintenance: 'Perbaikan',
@@ -145,17 +178,22 @@ export default function HousekeepingPage() {
     }
     
     return typeLabels[taskType as keyof typeof typeLabels] || taskType
-  }
+  }, [])
 
-  const handleViewTask = (taskId: string) => {
+  const handleViewTask = useCallback((taskId: string) => {
     setSelectedTaskId(taskId)
     setShowTaskDetail(true)
-  }
+  }, [])
 
-  const handleEditTask = (taskId: string) => {
+  const handleEditTask = useCallback((taskId: string) => {
     setSelectedTaskId(taskId)
     setShowCreateForm(true)
-  }
+  }, [])
+
+  const handleExport = useCallback((format: 'csv' | 'json' | 'excel' | 'report') => {
+    toast.info(`Export ${format.toUpperCase()} akan diimplementasikan dalam fase selanjutnya`)
+    setShowExportMenu(false)
+  }, [])
 
   if (isLoading) {
     return (
@@ -163,8 +201,8 @@ export default function HousekeepingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-warm-brown-600" />
-              <p className="text-gray-600">Memuat data housekeeping...</p>
+              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3 text-gray-400" />
+              <p className="text-sm text-gray-500">Memuat data housekeeping...</p>
             </div>
           </div>
         </div>
@@ -174,76 +212,146 @@ export default function HousekeepingPage() {
 
   return (
     <div className="p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900">Manajemen Housekeeping</h2>
-            <p className="text-gray-600 mt-1">
-              Kelola tugas pembersihan dan perawatan kamar
-            </p>
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Modern Header */}
+        <div className="border-b border-gray-200 pb-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-neutral-100 rounded-lg">
+                  <Sparkles className="w-5 h-5 text-neutral-700" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-semibold text-gray-900">Manajemen Housekeeping</h1>
+                  <p className="text-sm text-gray-600">
+                    Kelola tugas pembersihan dan perawatan kamar dengan efisien
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="text-gray-600 hover:bg-gray-50"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs">
+                    <div className="space-y-2 text-sm">
+                      <div className="font-semibold">Keyboard Shortcuts:</div>
+                      <div className="space-y-1">
+                        <div><kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">Cmd/Ctrl+N</kbd> Tambah tugas baru</div>
+                        <div><kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">Cmd/Ctrl+E</kbd> Export data</div>
+                        <div><kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">↑↓</kbd> Navigasi baris</div>
+                        <div><kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">Enter</kbd> Lihat detail</div>
+                        <div><kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">Esc</kbd> Batalkan</div>
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              <DropdownMenu open={showExportMenu} onOpenChange={setShowExportMenu}>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export
+                    <ChevronDown className="w-4 h-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => handleExport('csv')}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Export sebagai CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('excel')}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Export sebagai Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('json')}>
+                    <FileJson className="w-4 h-4 mr-2" />
+                    Export sebagai JSON
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleExport('report')}>
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Laporan Performa
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <Button 
+                onClick={() => setShowCreateForm(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Tambah Tugas
+              </Button>
+            </div>
           </div>
-          <Button 
-            className="bg-warm-brown-600 hover:bg-warm-brown-700"
-            onClick={() => setShowCreateForm(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Tambah Tugas
-          </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="border-0 shadow-sm bg-white">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Tugas</p>
-                  <p className="text-2xl font-bold">{tasks?.length || 0}</p>
+                  <p className="text-sm font-medium text-gray-600">Total Tugas</p>
+                  <p className="text-2xl font-semibold text-gray-900">{tasks?.length || 0}</p>
                 </div>
-                <ClipboardList className="w-8 h-8 text-gray-400" />
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <ClipboardList className="w-5 h-5 text-gray-600" />
+                </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-4">
+          <Card className="border-0 shadow-sm bg-white">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Menunggu</p>
-                  <p className="text-2xl font-bold text-yellow-600">
+                  <p className="text-sm font-medium text-gray-600">Menunggu</p>
+                  <p className="text-2xl font-semibold text-amber-600">
                     {tasks?.filter(t => t.status === 'pending').length || 0}
                   </p>
                 </div>
-                <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-yellow-600" />
+                <div className="p-2 bg-amber-50 rounded-lg">
+                  <Clock className="w-5 h-5 text-amber-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-4">
+          <Card className="border-0 shadow-sm bg-white">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Dikerjakan</p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-sm font-medium text-gray-600">Dikerjakan</p>
+                  <p className="text-2xl font-semibold text-blue-600">
                     {tasks?.filter(t => t.status === 'in_progress').length || 0}
                   </p>
                 </div>
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Timer className="w-4 h-4 text-blue-600" />
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <Timer className="w-5 h-5 text-blue-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-4">
+          <Card className="border-0 shadow-sm bg-white">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Selesai Hari Ini</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-sm font-medium text-gray-600">Selesai Hari Ini</p>
+                  <p className="text-2xl font-semibold text-green-600">
                     {tasks?.filter(t => {
                       const today = new Date().toISOString().split('T')[0]
                       const completedAt = t.completed_at ? new Date(t.completed_at).toISOString().split('T')[0] : null
@@ -251,8 +359,8 @@ export default function HousekeepingPage() {
                     }).length || 0}
                   </p>
                 </div>
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
               </div>
             </CardContent>
@@ -269,8 +377,8 @@ export default function HousekeepingPage() {
           {/* All Tasks Tab */}
           <TabsContent value="tasks" className="space-y-6">
             {/* Filters and Search */}
-            <Card>
-              <CardContent className="p-4">
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row gap-4">
                   <div className="flex-1">
                     <div className="relative">
@@ -279,7 +387,7 @@ export default function HousekeepingPage() {
                         placeholder="Cari nomor kamar, jenis tugas, atau nama petugas..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 border-gray-200 focus:border-gray-300"
                       />
                     </div>
                   </div>
@@ -330,14 +438,14 @@ export default function HousekeepingPage() {
             </Card>
 
             {/* Tasks Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Daftar Tugas Housekeeping</CardTitle>
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-medium">Daftar Tugas Housekeeping</CardTitle>
                 <CardDescription>
                   {filteredTasks.length} dari {tasks?.length || 0} tugas ditampilkan
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>

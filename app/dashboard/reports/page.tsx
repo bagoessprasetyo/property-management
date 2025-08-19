@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useProperty } from '@/lib/context/property-context'
+// Removed property context for single property setup
 import { useReports, useOccupancyReport, useRevenueReport } from '@/lib/hooks/use-reports'
 import { usePaymentStats } from '@/lib/hooks/use-payments'
 import { formatIDR } from '@/lib/utils/currency'
@@ -38,11 +38,11 @@ import {
 } from 'lucide-react'
 
 export default function ReportsPage() {
-  const { currentProperty } = useProperty()
-  const { data: reports, isLoading } = useReports(currentProperty?.id)
-  const { data: occupancyData, isLoading: occupancyLoading } = useOccupancyReport(currentProperty?.id)
-  const { data: revenueData, isLoading: revenueLoading } = useRevenueReport(currentProperty?.id)
-  const { data: paymentData, isLoading: paymentLoading } = usePaymentStats(currentProperty?.id)
+  // Removed currentProperty for single property setup
+  const { data: reports, isLoading } = useReports()
+  const { data: occupancyData, isLoading: occupancyLoading } = useOccupancyReport()
+  const { data: revenueData, isLoading: revenueLoading } = useRevenueReport()
+  const { data: paymentData, isLoading: paymentLoading } = usePaymentStats()
   const [reportType, setReportType] = useState('occupancy')
   const [periodFilter, setPeriodFilter] = useState('month')
   const [dateRange, setDateRange] = useState('current')
